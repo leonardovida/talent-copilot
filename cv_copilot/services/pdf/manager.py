@@ -139,7 +139,6 @@ async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> s
 
 #     :param pdf_id: The ID of the PDF to retrieve the job description for.
 #     """
-#     # Logic to retrieve job description based on PDF ID and update database
 
 
 # async def extract_skills_cv(pdf_id: int):
@@ -147,7 +146,6 @@ async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> s
 
 #     :param pdf_id: The ID of the PDF to retrieve the job description for.
 #     """
-#     # Logic to retrieve job description based on PDF ID and update database
 
 
 # async def evaluate_cv(pdf_id: int):
@@ -155,4 +153,3 @@ async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> s
 
 #     :param pdf_id: The ID of the PDF to evaluate.
 #     """
-#     # Logic to evaluate CV based on PDF ID and update database

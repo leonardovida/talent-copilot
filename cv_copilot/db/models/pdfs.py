@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic.networks import HttpUrl
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import BYTEA
@@ -18,7 +20,7 @@ class PDFModel(Base):
         nullable=False,
     )
     job_id: Mapped[int] = mapped_column(Integer, ForeignKey("jobs.id"), nullable=False)
-    uploaded_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     file: Mapped[bytes] = mapped_column(BYTEA, nullable=True)
     s3_url: Mapped[HttpUrl] = mapped_column(
         String(length=2000),  # noqa: WPS432

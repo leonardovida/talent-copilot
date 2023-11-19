@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
+from cv_copilot.db.models.pdfs import PDFModel
+
 
 class PDFModelDTO(BaseModel):
     """
@@ -14,6 +16,22 @@ class PDFModelDTO(BaseModel):
     name: str
     file: Optional[bytes] = None
     s3_url: Optional[HttpUrl] = None
+    created_date: str
+
+    @classmethod
+    def from_orm(cls, obj: PDFModel) -> "PDFModelDTO":
+        """Create a PDFModelDTO from a PDFModel.
+
+        :param obj: The PDFModel to create a DTO from.
+        :return: The created PDFModelDTO.
+        """
+        return cls(
+            id=obj.id,
+            name=obj.name,
+            file=obj.file,
+            s3_url=obj.s3_url,
+            created_date=obj.created_date.isoformat(),
+        )
 
 
 class PDFModelInputDTO(BaseModel):
@@ -27,7 +45,7 @@ class PDFModelInputDTO(BaseModel):
         ...,
         description="The ID of the job that this PDF is associated with",
     )
-    uploaded_date: str = Field(..., description="The date that this PDF was uploaded")
+    created_date: str = Field(..., description="The date that this PDF was uploaded")
     file: bytes = Field(default=None, description="The actual PDF file data")
     s3_url: Optional[HttpUrl] = Field(
         default=None,

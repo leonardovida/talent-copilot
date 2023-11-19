@@ -27,24 +27,19 @@ class PDFDAO:
         :return: DTO of the created PDF model.
         """
         # Get current time in Datetime format.
-        uploaded_date = pendulum.now().to_datetime_string()
+        created_date = pendulum.now()
         new_pdf = PDFModel(
             name=pdf_input.name,
             job_id=pdf_input.job_id,
-            uploaded_date=uploaded_date,
             file=pdf_input.file,
             s3_url=pdf_input.s3_url,
+            created_date=created_date,
         )
         self.session.add(new_pdf)
         await self.session.commit()
         await self.session.refresh(new_pdf)
 
-        return PDFModelDTO(
-            id=new_pdf.id,
-            name=new_pdf.name,
-            file=new_pdf.file,
-            s3_url=new_pdf.s3_url,
-        )
+        return PDFModelDTO.from_orm(new_pdf)
 
     async def get_pdf_by_id(
         self,

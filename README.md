@@ -1,4 +1,4 @@
-# cv_copilot
+# CV Copilot
 
 This project was generated using fastapi_template.
 

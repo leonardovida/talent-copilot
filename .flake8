@@ -1,7 +1,7 @@
 [flake8]
 max-complexity = 6
 inline-quotes = double
-max-line-length = 88
+max-line-length = 100
 extend-ignore = E203
 docstring_style=sphinx
 
@@ -72,6 +72,14 @@ ignore =
   WPS473,
   ; too many no-cover comments.
   WPS403,
+  ; Found too short name
+  WPS111,
+  ; Found High complexity (black collision)
+  WPS210,
+  ; Found too many local variables (black collision)
+  WPS211,
+  ; weird intends
+  RST206
 
 per-file-ignores =
   ; all tests
@@ -96,7 +104,7 @@ per-file-ignores =
   ; ignore import with wildcard
   F403,
   ; Found wrong metadata variable
-  WPS410,
+  WPS410
 
 exclude =
   ./.cache,

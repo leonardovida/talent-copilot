@@ -7,7 +7,7 @@ maintainers = [ "Leonardo Vida <leonardo.vida@databuildcompany.com>" ]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 fastapi = "^0.100.0"
 uvicorn = { version = "^0.22.0", extras = ["standard"] }
 gunicorn = "^21.2.0"
@@ -40,6 +40,7 @@ taskiq-fastapi = "^0"
 taskiq-redis = "^0"
 pyzmq = "^25"
 pendulum = "^2.1.2"
+pdf2image = "^1.16.3"
 
 
 [tool.poetry.dev-dependencies]

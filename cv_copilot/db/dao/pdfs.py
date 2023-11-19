@@ -16,7 +16,7 @@ class PDFDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def create_pdf(
+    async def upload_pdf(
         self,
         pdf_input: PDFModelInputDTO,
     ) -> PDFModelDTO:
@@ -45,6 +45,21 @@ class PDFDAO:
             file=new_pdf.file,
             s3_url=new_pdf.s3_url,
         )
+
+    async def get_pdf_by_id(
+        self,
+        pdf_id: int,
+    ) -> Optional[PDFModel]:
+        """
+        Get a single PDF by its ID.
+
+        :param pdf_id: ID of the PDF to retrieve.
+        :return: PDFModel if found, else None.
+        """
+        result = await self.session.execute(
+            select(PDFModel).where(PDFModel.id == pdf_id),
+        )
+        return result.scalars().first()
 
     async def get_all_pdfs(
         self,

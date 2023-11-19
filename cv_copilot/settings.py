@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import Optional
 
+from pydantic.networks import HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from yarl import URL
 
@@ -68,8 +69,32 @@ class Settings(BaseSettings):
     # E.G. http://localhost:4317
     opentelemetry_endpoint: Optional[str] = None
 
-    # OpenAI API key
+    # Background Tasks settings
+    parallel_tasks: int = 20
+
+    # OpenAPI settings
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    seed: int = 12345
+    temperature: float = 0.0  # noqa: WPS358
+    max_tokens: int = 4096
+
+    # Settings for GPT-4 Vision
+    vision_model_name: str = "gpt-4-vision-preview"
+    vision_prompt: str = (
+        "Read all the text in this image and give it back into JSON format."
+    )
+
+    # Endpoints for OpenAI
+    openai_hostname: HttpUrl = HttpUrl("https://api.openai.com")
+    openai_chat_endpoint: str = "/v1/chat/completions"
+
+    @property
+    def openai_url_chat(self) -> str:
+        """Build OpenAI URL for chat endpoint.
+
+        :return: OpenAI URL for chat endpoint.
+        """
+        return f"{self.openai_hostname}{self.openai_chat_endpoint}"
 
     @property
     def db_url(self) -> URL:

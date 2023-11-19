@@ -1,7 +1,7 @@
 from pydantic.networks import HttpUrl
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import BYTEA
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import DateTime, Integer, String
 
 from cv_copilot.db.base import Base
@@ -24,3 +24,5 @@ class PDFModel(Base):
         String(length=2000),  # noqa: WPS432
         nullable=True,
     )
+
+    parsed_pdfs = relationship("ImageModel", back_populates="pdfs")

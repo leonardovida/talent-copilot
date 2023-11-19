@@ -1,0 +1,96 @@
+version: '3.9'
+
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: prod
+    image: cv_copilot:${CV_COPILOT_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    labels:
+      # Enables traefik for this container.
+    - traefik.enable=true
+    - traefik.http.routers.cv_copilot.rule=Host(`${CV_COPILOT_TRAEFIK_HOST:-cv_copilot.localhost}`)
+    - traefik.http.routers.cv_copilot.entrypoints=http
+    - traefik.http.routers.cv_copilot.service=cv_copilot
+    - traefik.http.services.cv_copilot.loadbalancer.server.port=${CV_COPILOT_PORT:-8000}
+    networks:
+    - default
+    - traefik-shared
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      CV_COPILOT_HOST: 0.0.0.0
+      CV_COPILOT_DB_HOST: cv_copilot-db
+      CV_COPILOT_DB_PORT: 5432
+      CV_COPILOT_DB_USER: cv_copilot
+      CV_COPILOT_DB_PASS: cv_copilot
+      CV_COPILOT_DB_BASE: cv_copilot
+      CV_COPILOT_REDIS_HOST: cv_copilot-redis
+
+  taskiq-worker:
+    <<: *main_app
+    labels: []
+    command:
+    - taskiq
+    - worker
+    - cv_copilot.tkq:broker
+
+  db:
+    image: postgres:13.8-bullseye
+    hostname: cv_copilot-db
+    environment:
+      POSTGRES_PASSWORD: "cv_copilot"
+      POSTGRES_USER: "cv_copilot"
+      POSTGRES_DB: "cv_copilot"
+    volumes:
+    - cv_copilot-db-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: pg_isready -U cv_copilot
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  migrator:
+    image: cv_copilot:${CV_COPILOT_VERSION:-latest}
+    restart: "no"
+    command: alembic upgrade head
+    environment:
+      CV_COPILOT_DB_HOST: cv_copilot-db
+      CV_COPILOT_DB_PORT: 5432
+      CV_COPILOT_DB_USER: cv_copilot
+      CV_COPILOT_DB_PASS: cv_copilot
+      CV_COPILOT_DB_BASE: cv_copilot
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis:
+    image: bitnami/redis:6.2.5
+    hostname: "cv_copilot-redis"
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: redis-cli ping
+      interval: 1s
+      timeout: 3s
+      retries: 50
+
+
+
+volumes:
+  cv_copilot-db-data:
+    name: cv_copilot-db-data
+
+networks:
+  # Network for traefik.
+  traefik-shared:
+    name: traefik-shared

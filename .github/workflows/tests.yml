@@ -6,43 +6,43 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - name: Install deps
-      uses: knowsuchagency/poetry-install@v1
+      uses: snok/install-poetry@v1.3.4
       env:
-        POETRY_VIRTUALENVS_CREATE: false
+        virtualenvs-create: false
     - name: Run black check
       run: poetry run black --check .
   flake8:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - name: Install deps
-      uses: knowsuchagency/poetry-install@v1
+      uses: snok/install-poetry@v1.3.4
       env:
-        POETRY_VIRTUALENVS_CREATE: false
+        virtualenvs-create: false
     - name: Run flake8 check
       run: poetry run flake8 --count .
   mypy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - name: Install deps
-      uses: knowsuchagency/poetry-install@v1
+      uses: snok/install-poetry@v1.3.4
       env:
-        POETRY_VIRTUALENVS_CREATE: false
+        virtualenvs-create: false
     - name: Run mypy check
       run: poetry run mypy .
   pytest:
@@ -50,7 +50,7 @@ jobs:
     services:
 
       cv_copilot-db:
-        image: postgres:13.8-bullseye
+        image: postgres:16-bullseye
         env:
           POSTGRES_PASSWORD: cv_copilot
           POSTGRES_USER: cv_copilot
@@ -63,15 +63,15 @@ jobs:
         ports:
         - 5432:5432
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - name: Install deps
-      uses: knowsuchagency/poetry-install@v1
+      uses: snok/install-poetry@v1.3.4
       env:
-        POETRY_VIRTUALENVS_CREATE: false
+        virtualenvs-create: false
     - name: Run pytest check
       run: poetry run pytest -vv --cov="cv_copilot" .
       env:

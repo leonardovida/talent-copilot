@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cv_copilot.db.dependencies import get_db_session
 from cv_copilot.db.models.pdfs import PDFModel
-from cv_copilot.web.api.pdf.schema import PDFModelDTO, PDFModelInputDTO
+from cv_copilot.web.api.pdfs.schema import PDFModelDTO, PDFModelInputDTO
 
 
 class PDFDAO:

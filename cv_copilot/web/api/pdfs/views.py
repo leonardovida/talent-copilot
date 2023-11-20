@@ -5,7 +5,8 @@ from fastapi.param_functions import Depends
 
 from cv_copilot.db.dao.pdfs import PDFDAO
 from cv_copilot.db.models.pdfs import PDFModel
-from cv_copilot.services.pdf.manager import process_pdf_workflow, process_text_workflow
+from cv_copilot.services.pdf.workflow import process_pdf_workflow
+from cv_copilot.services.text_processing.workflow import process_text_workflow
 from cv_copilot.web.api.pdfs.schema import PDFModelDTO, PDFModelInputDTO
 
 router = APIRouter()

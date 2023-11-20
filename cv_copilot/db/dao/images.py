@@ -43,18 +43,20 @@ class ImageDAO:
     async def save_encoded_images(
         self,
         pdf_id: int,
+        job_id: int,
         encoded_images: list[str],
     ) -> List[int]:
         """
-        Save encoded images to the database.
+        Save encoded images to the database, each separately.
 
         :param pdf_id: ID of the PDF related to the images.
+        :param job_id: ID of the job description related to the images.
         :param encoded_images: List of base64 encoded images.
         :return: List of IDs of the added images.
         """
         # Create a list of ImageModel instances
         parsed_pdf_instances = [
-            ImageModel(pdf_id=pdf_id, encoded_image=image, text=None)
+            ImageModel(pdf_id=pdf_id, job_id=job_id, encoded_image=image, text=None)
             for image in encoded_images
         ]
 

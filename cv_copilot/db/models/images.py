@@ -15,10 +15,14 @@ class ImageModel(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     pdf_id: Mapped[int] = mapped_column(Integer, ForeignKey("pdfs.id"), nullable=False)
+    job_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("job_descriptions.id"),
+        nullable=False,
+    )
     encoded_image: Mapped[str] = mapped_column(
         Text,  # Using Text type for base64 encoded image
         nullable=False,
-        description="Base64 encoded image",
     )
     text: Mapped[str] = mapped_column(
         Text,  # Using Text type for extracted text
@@ -27,3 +31,4 @@ class ImageModel(Base):
 
     # Relationship to the PDFModel (if needed)
     pdf = relationship("PDFModel", back_populates="images")
+    job_description = relationship("JobDescriptionModel", back_populates="images")

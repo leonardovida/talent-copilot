@@ -19,7 +19,11 @@ class PDFModel(Base):
         String(length=200),  # noqa: WPS432
         nullable=False,
     )
-    job_id: Mapped[int] = mapped_column(Integer, ForeignKey("jobs.id"), nullable=False)
+    job_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("job_descriptions.id"),
+        nullable=False,
+    )
     created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     file: Mapped[bytes] = mapped_column(BYTEA, nullable=True)
     s3_url: Mapped[HttpUrl] = mapped_column(
@@ -27,4 +31,5 @@ class PDFModel(Base):
         nullable=True,
     )
 
-    parsed_pdfs = relationship("ImageModel", back_populates="pdfs")
+    images = relationship("ImageModel", back_populates="pdfs")
+    job_description = relationship("JobDescriptionModel", back_populates="pdfs")

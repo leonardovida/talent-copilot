@@ -41,6 +41,7 @@ taskiq-redis = "^0"
 pyzmq = "^25"
 pendulum = "^2.1.2"
 pdf2image = "^1.16.3"
+pytest-mock = "^3.12.0"
 
 
 [tool.poetry.dev-dependencies]

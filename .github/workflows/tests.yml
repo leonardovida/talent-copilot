@@ -6,45 +6,36 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
       with:
         python-version: '3.11'
-    - name: Install deps
-      uses: snok/install-poetry@v1.3.4
-      env:
-        virtualenvs-create: false
     - name: Run black check
-      run: poetry run black --check .
+      run: |
+        source .venv/bin/activate
+        poetry run black --check .
   flake8:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
       with:
         python-version: '3.11'
-    - name: Install deps
-      uses: snok/install-poetry@v1.3.4
-      env:
-        virtualenvs-create: false
     - name: Run flake8 check
-      run: poetry run flake8 --count .
+      run: |
+        source .venv/bin/activate
+        poetry run flake8 --count .
   mypy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
       with:
         python-version: '3.11'
-    - name: Install deps
-      uses: snok/install-poetry@v1.3.4
-      env:
-        virtualenvs-create: false
     - name: Run mypy check
-      run: poetry run mypy .
+      run: |
+        source .venv/bin/activate
+        poetry run mypy .
   pytest:
     runs-on: ubuntu-latest
     services:
@@ -63,17 +54,14 @@ jobs:
         ports:
         - 5432:5432
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
       with:
         python-version: '3.11'
-    - name: Install deps
-      uses: snok/install-poetry@v1.3.4
-      env:
-        virtualenvs-create: false
     - name: Run pytest check
-      run: poetry run pytest -vv --cov="cv_copilot" .
+      run: |
+        source .venv/bin/activate
+        poetry run pytest -vv --cov="cv_copilot" .
       env:
         CV_COPILOT_HOST: "0.0.0.0"
         CV_COPILOT_DB_HOST: localhost

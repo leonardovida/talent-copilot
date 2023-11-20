@@ -6,6 +6,8 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
     - name: Setup Python and Install Dependencies
       uses: ./.github/actions/setup-python-poetry
       with:
@@ -17,6 +19,8 @@ jobs:
   flake8:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
     - name: Setup Python and Install Dependencies
       uses: ./.github/actions/setup-python-poetry
       with:
@@ -28,6 +32,8 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
     - name: Setup Python and Install Dependencies
       uses: ./.github/actions/setup-python-poetry
       with:
@@ -54,6 +60,8 @@ jobs:
         ports:
         - 5432:5432
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
     - name: Setup Python and Install Dependencies
       uses: ./.github/actions/setup-python-poetry
       with:

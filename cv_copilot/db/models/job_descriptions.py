@@ -21,4 +21,5 @@ class JobDescriptionModel(Base):
     updated_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to the PDFModel (if needed)
-    pdf = relationship("PDFModel", back_populates="job_descriptions")
+    pdfs = relationship("PDFModel", back_populates="job_descriptions")
+    images = relationship("ImageModel", back_populates="job_descriptions")

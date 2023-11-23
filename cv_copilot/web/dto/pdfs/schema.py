@@ -14,6 +14,7 @@ class PDFModelDTO(BaseModel):
 
     id: int
     name: str
+    job_id: int
     file: Optional[bytes] = None
     s3_url: Optional[HttpUrl] = None
     created_date: str
@@ -27,6 +28,7 @@ class PDFModelDTO(BaseModel):
         """
         return cls(
             id=obj.id,
+            job_id=obj.job_id,
             name=obj.name,
             file=obj.file,
             s3_url=obj.s3_url,
@@ -46,7 +48,6 @@ class PDFModelInputDTO(BaseModel):
         description="The ID of the job that this PDF is associated with",
     )
     created_date: str = Field(..., description="The date that this PDF was uploaded")
-    file: bytes = Field(default=None, description="The actual PDF file data")
     s3_url: Optional[HttpUrl] = Field(
         default=None,
         description="The S3 URL of the PDF file",

@@ -10,7 +10,7 @@ class PDFConversionError(Exception):
     """Exception raised when a PDF cannot be converted to JPG."""
 
 
-def encode_pdf_pages(pdf: Optional[bytes]) -> List[str]:
+def encode_pdf_pages(pdf: Optional[bytes], pdf_id: int) -> List[str]:
     """
     Converts each page of a PDF file to JPG images and encodes them in base64.
 
@@ -19,6 +19,7 @@ def encode_pdf_pages(pdf: Optional[bytes]) -> List[str]:
     from the database and get the PDF file from storage (e.g. S3)
 
     :param pdf: The PDF file to convert to JPG.
+    :param pdf_id: The ID of the PDF to convert to JPG.
     :return: encoded_images: List of base64 encoded images.
     :raises ValueError: If the PDF file is None.
     :raises PDFConversionError: If the PDF cannot be converted to JPG.
@@ -39,4 +40,5 @@ def encode_pdf_pages(pdf: Optional[bytes]) -> List[str]:
         logging.error(f"Error in converting PDF to JPG: {e}")
         raise PDFConversionError(f"Error in converting PDF to JPG: {e}") from e
 
+    logging.info(f"Successfully converted PDF to JPG: for PDF with ID {pdf_id}")
     return encoded_images

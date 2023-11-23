@@ -79,7 +79,9 @@ ignore =
   ; Found too many local variables (black collision)
   WPS211,
   ; weird intends
-  RST206
+  RST206,
+  ; Too complex f string
+  WPS237
 
 per-file-ignores =
   ; all tests

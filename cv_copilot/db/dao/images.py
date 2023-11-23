@@ -1,5 +1,4 @@
-# cv_copilot/db/dao/images.py
-
+import logging
 from typing import List, Optional
 
 from fastapi import Depends
@@ -69,6 +68,7 @@ class ImageDAO:
             await self.session.refresh(image)
             image_ids.append(image.id)
 
+        logging.info(f"Saved {len(image_ids)} images to the database for PDF {pdf_id}")
         return image_ids
 
     async def get_image_by_id(self, image_id: int) -> Optional[ImageModel]:

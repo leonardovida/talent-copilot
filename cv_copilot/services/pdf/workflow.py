@@ -64,7 +64,10 @@ async def convert_pdf_to_jpg(
         return  # Exit the function if PDF is not found
 
     # Proceed with encoding if PDF is found
-    encoded_images = encode_pdf_pages(pdf=pdf.file)
+    encoded_images = encode_pdf_pages(
+        pdf=pdf.file,
+        pdf_id=pdf_id,
+    )
 
     # Save the encoded images
     await image_dao.save_encoded_images(

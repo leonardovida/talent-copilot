@@ -1,4 +1,5 @@
-from typing import List
+from datetime import datetime
+from typing import List, Union
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile
 from fastapi.param_functions import Depends
@@ -36,7 +37,7 @@ async def upload_pdf(
     pdf_file: UploadFile = File(...),
     name: str = Form(...),
     job_id: int = Form(...),
-    created_date: str = Form(...),
+    created_date: Union[str, datetime] = Form(...),
     pdf_dao: PDFDAO = Depends(),
 ) -> PDFModelDTO:
     """
@@ -46,7 +47,7 @@ async def upload_pdf(
     :param pdf_file: PDF file to upload.
     :param name: Name of the PDF.
     :param job_id: ID of the job description related to the PDF.
-    :param created_date: Date the PDF was created.
+    :param created_date: Date the PDF was created. Can be a string or a datetime.
     :param pdf_dao: DAO for PDFs models.
     :return: PDFModelDTO of the created PDF.
     """

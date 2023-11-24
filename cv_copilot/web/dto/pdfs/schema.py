@@ -1,6 +1,7 @@
-from typing import Optional
+from datetime import datetime
+from typing import Optional, Union
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, validator
 
 from cv_copilot.db.models.pdfs import PDFModel
 
@@ -47,8 +48,25 @@ class PDFModelInputDTO(BaseModel):
         ...,
         description="The ID of the job that this PDF is associated with",
     )
-    created_date: str = Field(..., description="The date that this PDF was uploaded")
+    created_date: Union[datetime, str] = Field(
+        ...,
+        description="The date that this PDF was uploaded",
+    )
     s3_url: Optional[HttpUrl] = Field(
         default=None,
         description="The S3 URL of the PDF file",
     )
+
+    @validator("created_date", pre=True)
+    def parse_created_date(cls, value: Union[str, datetime]) -> datetime:  # noqa: N805
+        """Parse the created_date into a datetime object.
+
+        :param value: The value to parse.
+        :return: The parsed datetime object.
+        :raises ValueError: If the value is not a valid datetime.
+        """
+        if isinstance(value, str):
+            return datetime.fromisoformat(value)
+        elif isinstance(value, datetime):
+            return value
+        raise ValueError(f"Invalid input for created_date: {value}")

@@ -64,10 +64,17 @@ async def convert_pdf_to_jpg(
         return  # Exit the function if PDF is not found
 
     # Proceed with encoding if PDF is found
-    encoded_images = encode_pdf_pages(pdf=pdf.file)
+    encoded_images = encode_pdf_pages(
+        pdf=pdf.file,
+        pdf_id=pdf_id,
+    )
 
     # Save the encoded images
-    await image_dao.save_encoded_images(pdf_id, encoded_images)
+    await image_dao.save_encoded_images(
+        pdf_id=pdf_id,
+        job_id=pdf.job_id,
+        encoded_images=encoded_images,
+    )
 
 
 async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> str:
@@ -97,6 +104,7 @@ async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> s
             )
 
     return pdf_full_text
+    # TODO: We need to save this full text somewhere
 
 
 # async def extract_skills_job_description(pdf_id: int):

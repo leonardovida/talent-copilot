@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import DateTime, String, Text
 
 from cv_copilot.db.base import Base
@@ -19,3 +19,7 @@ class JobDescriptionModel(Base):
     description: Mapped[Text] = mapped_column(Text, nullable=False)
     created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+    # Relationship to the PDFModel (if needed)
+    pdfs = relationship("PDFModel", back_populates="job_descriptions")
+    images = relationship("ImageModel", back_populates="job_descriptions")

@@ -6,6 +6,7 @@ from typing import Optional
 
 from pydantic.networks import HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import TypedDict
 from yarl import URL
 
 TEMP_DIR = Path(gettempdir())
@@ -20,6 +21,12 @@ class LogLevel(str, enum.Enum):  # noqa: WPS600
     WARNING = "WARNING"
     ERROR = "ERROR"
     FATAL = "FATAL"
+
+
+class ResponseFormat(TypedDict, total=False):
+    """Response format for GPT-4."""
+
+    type: str
 
 
 class Settings(BaseSettings):
@@ -83,6 +90,10 @@ class Settings(BaseSettings):
     vision_prompt: str = (
         "Read all the text in this image and give it back into JSON format."
     )
+
+    # Settings for GPT-4
+    gpt4_model_name: str = "gpt-4-1106-preview"
+    response_format: ResponseFormat = {"type": "json_object"}
 
     # Endpoints for OpenAI
     openai_hostname: HttpUrl = HttpUrl("https://api.openai.com")

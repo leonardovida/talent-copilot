@@ -31,9 +31,9 @@ class PDFModel(Base):
         nullable=True,
     )
 
-    images = relationship("ImageModel", back_populates="pdfs")
-    job_descriptions = relationship(
+    job_description = relationship(
         "JobDescriptionModel",
         back_populates="pdfs",
-        uselist=False,
     )
+    images = relationship("ImageModel", back_populates="pdf")
+    text = relationship("TextModel", back_populates="pdf")

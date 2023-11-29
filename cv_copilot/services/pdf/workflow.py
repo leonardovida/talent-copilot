@@ -6,6 +6,7 @@ from fastapi.param_functions import Depends
 
 from cv_copilot.db.dao.images import ImageDAO
 from cv_copilot.db.dao.pdfs import PDFDAO
+from cv_copilot.db.dao.texts import TextDAO
 from cv_copilot.services.pdf.openai_integrations import get_text_from_image
 from cv_copilot.services.pdf.pdf_processing import encode_pdf_pages
 from cv_copilot.settings import settings
@@ -24,7 +25,8 @@ async def process_pdf_workflow(pdf_id: int) -> bool:
     """
     try:
         await convert_pdf_to_jpg(pdf_id)
-        await convert_jpg_to_text(pdf_id)
+        text = await convert_jpg_to_text(pdf_id)
+        TextDAO.save_text(pdf_id, text)
         return True
     except HTTPException as http_err:
         logging.error(
@@ -61,7 +63,7 @@ async def convert_pdf_to_jpg(
     # Check if the PDF was found
     if pdf is None:
         logging.error(f"PDF with id {pdf_id} not found.")
-        return  # Exit the function if PDF is not found
+        return
 
     # Proceed with encoding if PDF is found
     encoded_images = encode_pdf_pages(
@@ -104,7 +106,6 @@ async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> s
             )
 
     return pdf_full_text
-    # TODO: We need to save this full text somewhere
 
 
 # async def extract_skills_job_description(pdf_id: int):

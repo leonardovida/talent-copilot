@@ -2,8 +2,27 @@ import logging
 
 from fastapi import HTTPException
 
+from cv_copilot.services.text_processing.cv_evaluation import evaluate_cv
+from cv_copilot.services.text_processing.skills_extraction import (
+    parse_skills_cv,
+    parse_skills_job_description,
+)
+from cv_copilot.web.dto.job_description.schema import JobDescriptionModel
 
-async def process_text_workflow(pdf_id: int) -> bool:
+
+async def process_job_description_workflow(
+    job_description: JobDescriptionModel,
+) -> bool:
+    """Process the text in the job description
+
+    :param job_description_id: The ID of the job description to process.
+    :return: True if the process is successful, False otherwise.
+    """
+    await parse_skills_job_description(job_description)
+    return False
+
+
+async def evaluate_cv_workflow(pdf_id: int) -> bool:
     """
     Process the text workflow.
 
@@ -17,9 +36,8 @@ async def process_text_workflow(pdf_id: int) -> bool:
     :raises: Exception if the text cannot be saved to the database.
     """
     try:
-        # await extract_skills_job_description(pdf_id)
-        # await extract_skills_cv(pdf_id)
-        # await evaluate_cv(pdf_id)
+        await parse_skills_cv(pdf_id)
+        await evaluate_cv(pdf_id)
         return True
     except HTTPException as http_err:
         logging.error(

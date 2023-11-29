@@ -1,7 +1,8 @@
+import logging
 from typing import List, Optional
 
-from fastapi import Depends, UploadFile
-from sqlalchemy import select
+from fastapi import Depends, HTTPException, UploadFile
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cv_copilot.db.dependencies import get_db_session
@@ -26,25 +27,31 @@ class PDFDAO:
         :param pdf_input: DTO for creating a PDF model.
         :param pdf_file: PDF file to upload.
         :return: DTO of the created PDF model.
+        :raises HTTPException: If the PDF cannot be uploaded.
         """
-        file_content = await pdf_file.read()
-        new_pdf = PDFModel(
-            name=pdf_input.name,
-            job_id=pdf_input.job_id,
-            file=file_content,
-            s3_url=pdf_input.s3_url,
-            created_date=pdf_input.created_date,
-        )
-        self.session.add(new_pdf)
-        await self.session.commit()
-        await self.session.refresh(new_pdf)
-
-        return PDFModelDTO.from_orm(new_pdf)
+        try:
+            file_contents = pdf_file.file.read()
+            new_pdf = PDFModel(
+                name=pdf_input.name,
+                job_id=pdf_input.job_id,
+                file=file_contents,
+                s3_url=pdf_input.s3_url,
+                created_date=pdf_input.created_date,
+            )
+            self.session.add(new_pdf)
+            await self.session.commit()
+            await self.session.refresh(new_pdf)
+            return PDFModelDTO.from_orm(new_pdf)
+        except Exception as e:
+            logging.error(f"Error uploading PDF: {e}")
+            raise HTTPException(status_code=500, detail=str(e)) from e
+        finally:
+            pdf_file.file.close()
 
     async def get_pdf_by_id(
         self,
         pdf_id: int,
-    ) -> Optional[PDFModelDTO]:
+    ) -> Optional[PDFModel]:
         """
         Get a single PDF by its ID.
 
@@ -54,8 +61,7 @@ class PDFDAO:
         result = await self.session.execute(
             select(PDFModel).where(PDFModel.id == pdf_id),
         )
-        pdf_model = result.scalars().first()
-        return PDFModelDTO.from_orm(pdf_model) if pdf_model else None
+        return result.scalars().first()
 
     async def get_all_pdfs(
         self,
@@ -66,6 +72,8 @@ class PDFDAO:
         """
         Get all PDFs for a job description (job_id) with limit/offset pagination.
 
+        The PDFs are ordered in order by recency.
+
         :param job_id: job_id of the job description of the PDF.
         :param limit: limit of PDF.
         :param offset: offset of PDF.
@@ -74,6 +82,7 @@ class PDFDAO:
         raw_pdfs = await self.session.execute(
             select(PDFModel)
             .where(PDFModel.job_id == job_id)
+            .order_by(desc(PDFModel.created_date))
             .limit(limit)
             .offset(offset),
         )

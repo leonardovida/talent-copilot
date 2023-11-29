@@ -16,7 +16,6 @@ class PDFModelDTO(BaseModel):
     id: int
     name: str
     job_id: int
-    file: Optional[bytes] = None
     s3_url: Optional[HttpUrl] = None
     created_date: str
 
@@ -31,7 +30,6 @@ class PDFModelDTO(BaseModel):
             id=obj.id,
             job_id=obj.job_id,
             name=obj.name,
-            file=obj.file,
             s3_url=obj.s3_url,
             created_date=obj.created_date.isoformat(),
         )
@@ -70,3 +68,36 @@ class PDFModelInputDTO(BaseModel):
         elif isinstance(value, datetime):
             return value
         raise ValueError(f"Invalid input for created_date: {value}")
+
+
+class PDFModelInternalDTO(BaseModel):
+    """
+    Internal DTO for PDF models including the file data.
+
+    :param obj: The PDFModel to create a DTO from.
+    :return: The created PDFModelInternalDTO.
+    """
+
+    id: int
+    name: str
+    job_id: int
+    file: bytes
+    s3_url: Optional[HttpUrl] = None
+    created_date: datetime
+
+    @classmethod
+    def from_orm(cls, obj: PDFModel) -> "PDFModelInternalDTO":
+        """
+        Create a PDFModelInternalDTO from a PDFModel including the file data.
+
+        :param obj: The PDFModel to create a DTO from.
+        :return: The created PDFModelInternalDTO.
+        """
+        return cls(
+            id=obj.id,
+            job_id=obj.job_id,
+            name=obj.name,
+            file=obj.file,
+            s3_url=obj.s3_url,
+            created_date=obj.created_date,
+        )

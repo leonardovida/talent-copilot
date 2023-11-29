@@ -30,5 +30,5 @@ class ImageModel(Base):
     )
 
     # Relationship to the PDFModel (if needed)
-    pdfs = relationship("PDFModel", back_populates="images")
-    job_descriptions = relationship("JobDescriptionModel", back_populates="images")
+    job_description = relationship("JobDescriptionModel", back_populates="images")
+    pdf = relationship("PDFModel", back_populates="images")

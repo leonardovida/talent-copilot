@@ -1,4 +1,4 @@
-FROM python:3.11.4-slim-bullseye as prod
+FROM python:3.11.6-slim-bullseye as prod
 RUN apt-get update && apt-get install -y \
   gcc \
   && rm -rf /var/lib/apt/lists/*

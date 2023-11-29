@@ -81,7 +81,11 @@ ignore =
   ; weird intends
   RST206,
   ; Too complex f string
-  WPS237
+  WPS237,
+  ; Too deep nesting
+  WPS220,
+  ; Found magic numbers
+  WPS432
 
 per-file-ignores =
   ; all tests

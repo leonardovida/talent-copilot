@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy import ForeignKey, Integer
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import DateTime, String, Text
 
@@ -20,6 +22,30 @@ class JobDescriptionModel(Base):
     created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    # Relationship to the PDFModel (if needed)
-    pdfs = relationship("PDFModel", back_populates="job_descriptions")
-    images = relationship("ImageModel", back_populates="job_descriptions")
+    pdfs = relationship("PDFModel", back_populates="job_description")
+    images = relationship("ImageModel", back_populates="job_description")
+    # One to one relationship with parsed_job_descriptions
+    parsed_job_description = relationship(
+        "ParsedJobDescriptionModel",
+        back_populates="job_description",
+        uselist=False,
+    )
+
+
+class ParsedJobDescriptionModel(Base):
+    """Model for parsed job descriptions."""
+
+    __tablename__ = "parsed_job_descriptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    job_description_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("job_descriptions.id"),
+        nullable=False,
+    )
+    parsed_text: Mapped[JSONB] = mapped_column(JSONB, nullable=False)
+
+    job_description = relationship(
+        "JobDescriptionModel",
+        back_populates="parsed_job_description",
+    )

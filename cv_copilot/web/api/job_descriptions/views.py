@@ -155,5 +155,10 @@ async def process_job_description(
             status_code=404,  # noqa: WPS432
             detail="Job description not found",
         )
-    await process_job_description_workflow(job_description)
+    result = await process_job_description_workflow(job_description)
+    if result is False:
+        raise HTTPException(
+            status_code=500,  # noqa: WPS432
+            detail="Job description processing failed",
+        )
     return {"status": "success", "message": "Job description processed successfully."}

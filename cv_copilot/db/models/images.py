@@ -1,4 +1,6 @@
-from sqlalchemy import ForeignKey
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import Integer, Text
 
@@ -27,6 +29,11 @@ class ImageModel(Base):
     text: Mapped[str] = mapped_column(
         Text,  # Using Text type for extracted text
         nullable=True,  # Initially nullable, will be populated later
+    )
+    created_date: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
     )
 
     # Relationship to the PDFModel (if needed)

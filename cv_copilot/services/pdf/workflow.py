@@ -12,7 +12,7 @@ from cv_copilot.services.pdf.pdf_processing import encode_pdf_pages
 from cv_copilot.settings import settings
 
 
-async def process_pdf_workflow(pdf_id: int) -> bool:
+async def process_pdf_workflow(pdf_id: int, text_dao: TextDAO = Depends()) -> bool:
     """
     Process the PDF workflow which includes converting PDF to JPG and then to text.
 
@@ -26,7 +26,7 @@ async def process_pdf_workflow(pdf_id: int) -> bool:
     try:
         await convert_pdf_to_jpg(pdf_id)
         text = await convert_jpg_to_text(pdf_id)
-        TextDAO.save_text(pdf_id, text)
+        await text_dao.save_text(pdf_id=pdf_id, text=text)
         return True
     except HTTPException as http_err:
         logging.error(

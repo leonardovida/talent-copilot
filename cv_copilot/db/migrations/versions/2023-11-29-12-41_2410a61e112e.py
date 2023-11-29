@@ -18,34 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "texts",
-        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
-        sa.Column("pdf_id", sa.Integer, ForeignKey("pdfs.id"), nullable=False),
-        sa.Column("text", sa.Text, nullable=True),
-    )
-    op.create_table(
-        "parsed_texts",
-        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
-        sa.Column(
-            "job_description_id",
-            sa.Integer,
-            ForeignKey("pdfs.id"),
-            nullable=False,
-        ),
-        sa.Column("parsed_text", sa.Text, nullable=True),
-    )
-    op.create_table(
-        "parsed_job_descriptions",
-        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
-        sa.Column(
-            "job_description_id",
-            sa.Integer,
-            ForeignKey("pdfs.id"),
-            nullable=False,
-        ),
-        sa.Column("parsed_text", sa.Text, nullable=True),
-    )
+    # Create job_descriptions table
     op.create_table(
         "job_descriptions",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
@@ -66,9 +39,9 @@ def upgrade() -> None:
             ForeignKey("job_descriptions.id"),
             nullable=False,
         ),
-        sa.Column("created_date", sa.DateTime, nullable=False),
         sa.Column("file", BYTEA, nullable=True),
         sa.Column("s3_url", sa.String(length=2000), nullable=True),
+        sa.Column("created_date", sa.DateTime, nullable=False),
     )
 
     # Create images table
@@ -84,6 +57,7 @@ def upgrade() -> None:
         ),
         sa.Column("encoded_image", sa.Text, nullable=False),
         sa.Column("text", sa.Text, nullable=True),
+        sa.Column("created_date", sa.DateTime, nullable=False),
     )
 
     # Create users table
@@ -109,8 +83,39 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("FALSE"),
         ),
-        # Add other user columns here, such as first_name, last_name, etc.
     )
+    op.create_table(
+        "texts",
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column("pdf_id", sa.Integer, ForeignKey("pdfs.id"), nullable=False),
+        sa.Column("text", sa.Text, nullable=True),
+        sa.Column("created_date", sa.DateTime, nullable=False),
+    )
+    op.create_table(
+        "parsed_texts",
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column(
+            "job_description_id",
+            sa.Integer,
+            ForeignKey("pdfs.id"),
+            nullable=False,
+        ),
+        sa.Column("parsed_text", sa.Text, nullable=True),
+        sa.Column("created_date", sa.DateTime, nullable=False),
+    )
+    op.create_table(
+        "parsed_job_descriptions",
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column(
+            "job_description_id",
+            sa.Integer,
+            ForeignKey("pdfs.id"),
+            nullable=False,
+        ),
+        sa.Column("parsed_text", sa.Text, nullable=True),
+        sa.Column("created_date", sa.DateTime, nullable=False),
+    )
+    print("Migration 2410a61e112e applied successfully.")
 
 
 def downgrade() -> None:

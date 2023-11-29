@@ -1,3 +1,5 @@
+from typing import List
+
 import requests
 import streamlit as st
 
@@ -6,7 +8,7 @@ from cv_copilot.webapp.pdf_evaluation import display_recent_cvs, upload_pdf
 API_ENDPOINT = "http://localhost:8000/api/job-descriptions"
 
 
-def get_job_descriptions(limit: int) -> list:
+def get_job_descriptions(limit: int) -> List[str]:
     """Get the most recent job descriptions from the API.
 
     :param limit: The number of job descriptions to return.

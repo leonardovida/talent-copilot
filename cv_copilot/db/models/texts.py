@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from cv_copilot.db.base import Base
@@ -23,9 +23,33 @@ class TextModel(Base):
     pdf = relationship("PDFModel", back_populates="text")
     parsed_text = relationship(
         "ParsedTextModel",
-        back_populates="job_description",
-        uselist=False,
+        back_populates="text",
+        # uselist=False,
     )
 
-    def __repr__(self):
-        return f"<TextModel(id={self.id}, pdf_id={self.pdf_id})>"
+
+class ParsedTextModel(Base):
+    """Model for parsed job descriptions."""
+
+    __tablename__ = "parsed_texts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    job_description_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("job_descriptions.id"),
+        nullable=False,
+    )
+    text_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("texts.id"),
+        nullable=False,
+    )
+    parsed_text: Mapped[Text] = mapped_column(Text, nullable=False)
+    created_date = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+
+    job_description = relationship("JobDescriptionModel", back_populates="parsed_text")
+    text = relationship("TextModel", back_populates="parsed_text")

@@ -15,10 +15,10 @@ async def process_job_description_workflow(
 ) -> bool:
     """Process the text in the job description
 
-    :param job_description_id: The ID of the job description to process.
+    :param job_description: The job description to process.
     :return: True if the process is successful, False otherwise.
     """
-    await parse_skills_job_description(job_description)
+    response = await parse_skills_job_description(job_description)
     return False
 
 

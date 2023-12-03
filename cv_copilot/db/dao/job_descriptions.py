@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional, cast
 
 import pendulum
 from sqlalchemy import delete, desc, select, update
@@ -10,6 +10,7 @@ from cv_copilot.db.models.job_descriptions import (
     JobDescriptionModel,
     ParsedJobDescriptionModel,
 )
+from cv_copilot.services.llm.models.skills import SkillsExtract
 from cv_copilot.web.dto.job_description.schema import (
     JobDescriptionDTO,
     JobDescriptionInputDTO,
@@ -25,25 +26,22 @@ class JobDescriptionDAO:
     async def create_job_description(
         self,
         job_description_dto: JobDescriptionInputDTO,
-    ) -> JobDescriptionDTO:
+    ) -> JobDescriptionModel:
         """
         Add a single job description to the database.
 
         :param job_description_dto: JobDescriptionInputDTO instance to add.
         :return: The added JobDescriptionDTO instance.
         """
-        created_date = pendulum.now("UTC").naive()
         new_job_description = JobDescriptionModel(
             title=job_description_dto.title,
             description=job_description_dto.description,
-            created_date=created_date,
         )
         self.session.add(new_job_description)
         await self.session.commit()
         await self.session.refresh(new_job_description)
         logging.info(f"Job description created with ID: {new_job_description.id}")
-        job_description = JobDescriptionDTO.from_orm(new_job_description)
-        return job_description
+        return new_job_description
 
     async def get_job_description_by_id(
         self,
@@ -170,8 +168,8 @@ class ParsedJobDescriptionDAO:
     async def save_parsed_job_description(
         self,
         job_description_id: int,
-        parsed_text: Dict[str, Any],
-    ) -> None:
+        job_extract: SkillsExtract,
+    ) -> ParsedJobDescriptionModel:
         """Save a parsed job description to the database.
 
         :param job_description_id: ID of the job description to save.
@@ -179,24 +177,31 @@ class ParsedJobDescriptionDAO:
         """
         new_parsed_job_description = ParsedJobDescriptionModel(
             job_description_id=job_description_id,
-            parsed_text=parsed_text,
+            parsed_skills=job_extract.model_dump(),
         )
         self.session.add(new_parsed_job_description)
         await self.session.commit()
+        await self.session.refresh(new_parsed_job_description)
+        logging.info(
+            f"Parsed job description created with ID: {new_parsed_job_description.id}",
+        )
+        return new_parsed_job_description
 
     async def update_parsed_job_description(
         self,
         job_description_id: int,
-        parsed_text: Dict[str, Any],
+        job_extract: SkillsExtract,
     ) -> None:
         """Update a parsed job description in the database.
 
         :param job_description_id: ID of the job description to update.
-        :param parsed_text: Parsed text to update.
+        :param job_extract: SkillsExtract object with the updated data.
         """
         await self.session.execute(
             update(ParsedJobDescriptionModel)
             .where(ParsedJobDescriptionModel.job_description_id == job_description_id)
-            .values(parsed_text=parsed_text),
+            .values(
+                parsed_skills=job_extract.model_dump(),
+            ),
         )
         await self.session.commit()

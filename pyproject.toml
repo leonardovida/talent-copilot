@@ -46,6 +46,8 @@ python-multipart = "^0.0.6"
 requests = "^2.31.0"
 openai = "^1.3.6"
 types-requests = "^2.31.0.10"
+instructor = "^0.4.0"
+python-dotenv = "^1.0.0"
 
 
 [tool.poetry.dev-dependencies]

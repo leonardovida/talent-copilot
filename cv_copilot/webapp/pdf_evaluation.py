@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict, List
 
 import requests
 import streamlit as st
@@ -6,15 +7,7 @@ import streamlit as st
 API_ENDPOINT = "http://localhost:8000/api/pdfs"
 
 
-def evaluate_cv(pdf_id: int):
-    """Evaluate a CV.
-
-    :param pdf_id: The ID of the PDF to evaluate.
-    """
-    # Placeholder for the evaluation logic
-
-
-def upload_pdf(job_id: int) -> None:
+def upload_pdf(job_id: str) -> None:
     """Upload a PDF to the database.
 
     :param job_id: The ID of the job description to upload the PDF to.
@@ -46,22 +39,61 @@ def upload_pdf(job_id: int) -> None:
             st.error("Error. Please upload a CV in PDF format.")
 
 
-def display_recent_cvs(job_id: int, limit: int = 10):
+def get_cv_list(job_id: str, limit: str) -> List[Dict[str, str]]:
+    """Get the list of CVs for a job description.
+
+    :param job_id: The ID of the job description to get the CVs for.
+    :return: List of CVs.
+    """
     params = {"job_id": job_id, "limit": limit}
     response = requests.get(
         f"{API_ENDPOINT}",
         timeout=10,
         params=params,
     )
-
     if response.status_code == 200:
-        recent_cvs = response.json()
-
-        for index, cv in enumerate(recent_cvs):
-            col1, col2 = st.columns([4, 1])
-            col1.text(cv["name"])
-
-            if col2.button("Evaluate CV", key=f"evaluate_{cv['id']}"):
-                print("Evaluating CV...")
+        return response.json()
     else:
-        st.error(f"Failed to fetch recent CVs: {response.status_code}, {response.text}")
+        st.error(f"Failed to fetch CVs: {response.status_code}, {response.text}")
+        return []
+
+
+def process_cv(job_id: str, cv_id: str) -> None:
+    """Process a CV.
+
+    :param job_id: The ID of the job description to process the CV for.
+    :param cv_id: The ID of the CV to process.
+    """
+    params = {"job_id": job_id}
+    response = requests.get(
+        f"{API_ENDPOINT}/{cv_id}/process",
+        timeout=240,
+        params=params,
+    )
+    if response.status_code == 200:
+        st.success("CV evaluated!")
+        parsed_job = response.json()
+        st.write(parsed_job)
+    else:
+        st.error("Failed to evaluate CV")
+        st.write(response)
+
+
+def display_recent_cvs(job_id: str, limit: str = "10"):
+    """Display the most recent CVs.
+
+    This function will be modified into 'display_top_k_cvs' in the future.
+
+    :param job_id: The ID of the job description to display the CVs for.
+    :param limit: The number of CVs to display.
+    """
+    recent_cvs = get_cv_list(job_id, limit)
+
+    for index, cv in enumerate(recent_cvs):
+        col1, col2 = st.columns([4, 1])
+        col1.text(cv["name"])
+
+        with col2:
+            with st.spinner("Evaluating..."):
+                if st.button("Evaluate CV", key=f"evaluate_{cv['id']}"):
+                    process_cv(job_id, cv["id"])

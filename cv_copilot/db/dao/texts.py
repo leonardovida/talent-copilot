@@ -1,9 +1,11 @@
+import logging
 from typing import Optional
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cv_copilot.db.models.texts import ParsedTextModel, TextModel
+from cv_copilot.services.llm.models.skills import SkillsExtract
 
 
 class TextDAO:
@@ -25,26 +27,21 @@ class TextDAO:
         image_text = result.scalar_one_or_none()
         return image_text
 
-    async def save_text(self, pdf_id: int, text: str) -> None:
+    async def save_text(self, pdf_id: int, text: str) -> TextModel:
         """
         Save text for a PDF.
 
         :param pdf_id: ID of the PDF to save text for.
         :param text: The text to save.
         """
-        await self.session.execute(
-            update(TextModel).where(TextModel.id == pdf_id).values(text=text),
+        new_text = TextModel(
+            pdf_id=pdf_id,
+            text=text,
         )
+        self.session.add(new_text)
         await self.session.commit()
-
-    async def update_text(self, pdf_id: int, text: str) -> None:
-        """
-        Update the text for an image.
-
-        :param pdf_id: ID of the image to update text for.
-        :param text: The new text to update.
-        """
-        await self.save_text(pdf_id, text)
+        await self.session.refresh(new_text)
+        return new_text
 
 
 class ParsedTextDAO:
@@ -69,18 +66,28 @@ class ParsedTextDAO:
         )
         return result.scalar_one_or_none()
 
-    async def save_parsed_text(self, job_description_id: int, parsed_text: str) -> None:
+    async def save_parsed_text(
+        self,
+        job_id: int,
+        pdf_id: int,
+        parsed_text: SkillsExtract,
+    ) -> ParsedTextModel:
         """Save a parsed text to the database.
 
         :param job_description_id: ID of the job description to save.
         :param parsed_text: Parsed text to save.
         """
         new_parsed_text = ParsedTextModel(
-            job_description_id=job_description_id,
-            parsed_text=parsed_text,
+            job_id=job_id,
+            parsed_text=parsed_text.required_skills,
+            pdf_id=pdf_id,
+            nice_to_have_skills=parsed_text.nice_to_have_skills,
         )
         self.session.add(new_parsed_text)
         await self.session.commit()
+        await self.session.refresh(new_parsed_text)
+        logging.info(f"Parsed text created with ID: {new_parsed_text.id}")
+        return new_parsed_text
 
     async def update_parsed_text(
         self,

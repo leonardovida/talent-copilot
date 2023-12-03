@@ -6,7 +6,7 @@
   - This category modifies the type of prompt that is used to parse the skills from the job description itself but also from the CV
   - So we can focus more on certain 'styles' of jobs and decide what to extract.
     - Maybe in the future use a toggle to understand how much soft skills vs. hard skills to extract for each job description?
--
+  - This will be created with "dynamic model creation" via the Instructor Python library
 
 ## User Flows
 

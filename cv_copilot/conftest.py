@@ -155,7 +155,10 @@ async def create_job_description(dbsession: AsyncSession) -> JobDescriptionDTO:
         title="Sample Job Title",
         description="Sample Job Description",
     )
-    return await job_description_dao.create_job_description(job_description_input_dto)
+    job_description = await job_description_dao.create_job_description(
+        job_description_input_dto,
+    )
+    return JobDescriptionDTO.from_orm(job_description)
 
 
 @pytest.fixture

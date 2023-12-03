@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from cv_copilot.db.base import Base
 
 
 class TextModel(Base):
-    """Model for PDFs."""
+    """Model for Texts."""
 
     __tablename__ = "texts"
 
@@ -23,13 +24,11 @@ class TextModel(Base):
     pdf = relationship("PDFModel", back_populates="text")
     parsed_text = relationship(
         "ParsedTextModel",
-        back_populates="text",
-        # uselist=False,
     )
 
 
 class ParsedTextModel(Base):
-    """Model for parsed job descriptions."""
+    """Model for parsed texts."""
 
     __tablename__ = "parsed_texts"
 
@@ -44,7 +43,11 @@ class ParsedTextModel(Base):
         ForeignKey("texts.id"),
         nullable=False,
     )
-    parsed_text: Mapped[Text] = mapped_column(Text, nullable=False)
+    pdf_id: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+    parsed_skills: Mapped[JSONB] = mapped_column(Text, nullable=False)
     created_date = mapped_column(
         DateTime,
         nullable=False,

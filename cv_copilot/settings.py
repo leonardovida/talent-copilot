@@ -4,12 +4,14 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import Optional
 
+from dotenv import load_dotenv
 from pydantic.networks import HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import TypedDict
 from yarl import URL
 
 TEMP_DIR = Path(gettempdir())
+load_dotenv()
 
 
 class LogLevel(str, enum.Enum):  # noqa: WPS600
@@ -80,7 +82,7 @@ class Settings(BaseSettings):
     parallel_tasks: int = 20
 
     # OpenAPI settings
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    openai_api_key: str = os.getenv("CV_COPILOT_OPENAI_API_KEY", "")
     seed: int = 12345
     temperature: float = 0.0  # noqa: WPS358
     max_tokens: int = 4096
@@ -92,7 +94,7 @@ class Settings(BaseSettings):
     )
 
     # Settings for GPT-4
-    gpt4_model_name: str = "gpt-4-1106-preview"
+    gpt4_model_name: str = "gpt-4-1106-preview"  # "gpt-3.5-turbo-1106"
     response_format: ResponseFormat = {"type": "json_object"}
 
     # Endpoints for OpenAI

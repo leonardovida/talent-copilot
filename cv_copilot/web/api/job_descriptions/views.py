@@ -1,16 +1,18 @@
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from cv_copilot.db.dao.job_descriptions import JobDescriptionDAO
-from cv_copilot.db.dependencies import get_db_session
-from cv_copilot.services.text_processing.workflow import (
-    process_job_description_workflow,
+from cv_copilot.db.dao.job_descriptions import (
+    JobDescriptionDAO,
+    ParsedJobDescriptionDAO,
 )
+from cv_copilot.db.dependencies import get_db_session
+from cv_copilot.services.text.workflow import workflow_process_job_description
 from cv_copilot.web.dto.job_description.schema import (
     JobDescriptionDTO,
     JobDescriptionInputDTO,
+    ParsedJobDescriptionDTO,
 )
 
 router = APIRouter()
@@ -27,10 +29,26 @@ async def get_job_description_dao(
     return JobDescriptionDAO(session)
 
 
+async def get_parsed_job_description_dao(
+    session: AsyncSession = Depends(get_db_session),
+) -> ParsedJobDescriptionDAO:
+    """Dependency for ParsedJobDescriptionDAO.
+
+    :param session: AsyncSession dependency.
+    :return: ParsedJobDescriptionDAO instance.
+    """
+    return ParsedJobDescriptionDAO(session)
+
+
 @router.post("/", response_model=JobDescriptionDTO)
 async def create_job_description(
     job_description_input: JobDescriptionInputDTO,
+    background_tasks: BackgroundTasks,
     job_description_dao: JobDescriptionDAO = Depends(get_job_description_dao),
+    parsed_job_description_dao: ParsedJobDescriptionDAO = Depends(
+        get_parsed_job_description_dao,
+    ),
+    run_process_workflow: bool = False,
 ) -> JobDescriptionDTO:
     """
     Store a new job description in the database.
@@ -39,7 +57,17 @@ async def create_job_description(
     :param job_description_dao: DAO for Job Descriptions models.
     :return: job_description_model: DTO of the created job description model.
     """
-    return await job_description_dao.create_job_description(job_description_input)
+    job_description = await job_description_dao.create_job_description(
+        job_description_input,
+    )
+    if run_process_workflow:
+        background_tasks.add_task(
+            workflow_process_job_description,
+            job_description,
+            parsed_job_description_dao,
+        )
+        return JobDescriptionDTO.from_orm(job_description)
+    return JobDescriptionDTO.from_orm(job_description)
 
 
 @router.get("/", response_model=List[JobDescriptionDTO])
@@ -52,6 +80,7 @@ async def get_job_descriptions(
     Retrieve the most recent job descriptions.
 
     :param limit: The number of recent job descriptions to return.
+    :param offset: The offset to start from.
     :param job_description_dao: DAO for Job Descriptions models.
     :return: List of recent job descriptions.
     :raises HTTPException: If no job descriptions are found.
@@ -135,17 +164,22 @@ async def delete_job_description(
     return {"status": "success", "message": "Job description deleted successfully."}
 
 
-@router.get("/{job_description_id}/process/", response_model=dict)
+@router.get("/{job_description_id}/process/", response_model=ParsedJobDescriptionDTO)
 async def process_job_description(
     job_description_id: int,
     job_description_dao: JobDescriptionDAO = Depends(get_job_description_dao),
-) -> Dict[str, str]:
+    parsed_job_description_dao: ParsedJobDescriptionDAO = Depends(
+        get_parsed_job_description_dao,
+    ),
+) -> ParsedJobDescriptionDTO:
     """
     Process a job description.
 
     :param job_description_id: ID of the job description to process.
     :param job_description_dao: DAO for Job Descriptions models.
+    :param parsed_job_description_dao: DAO for ParsedJobDescription models.
     :return: Confirmation of processing.
+    :raises HTTPException: If the job description is not found.
     """
     job_description = await job_description_dao.get_job_description_by_id(
         job_description_id,
@@ -155,10 +189,8 @@ async def process_job_description(
             status_code=404,  # noqa: WPS432
             detail="Job description not found",
         )
-    result = await process_job_description_workflow(job_description)
-    if result is False:
-        raise HTTPException(
-            status_code=500,  # noqa: WPS432
-            detail="Job description processing failed",
-        )
-    return {"status": "success", "message": "Job description processed successfully."}
+    job_description_processed = await workflow_process_job_description(
+        job_description,
+        parsed_job_description_dao,
+    )
+    return ParsedJobDescriptionDTO.from_orm(job_description_processed)

@@ -94,13 +94,15 @@ def upgrade() -> None:
     op.create_table(
         "parsed_texts",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column("pdf_id", sa.Integer, nullable=False),
         sa.Column(
             "job_description_id",
             sa.Integer,
-            ForeignKey("pdfs.id"),
+            ForeignKey("job_descriptions.id"),
             nullable=False,
         ),
-        sa.Column("parsed_text", sa.Text, nullable=True),
+        sa.Column("text_id", sa.Integer, ForeignKey("texts.id"), nullable=False),
+        sa.Column("parsed_skills", sa.Text, nullable=True),
         sa.Column("created_date", sa.DateTime, nullable=False),
     )
     op.create_table(
@@ -109,10 +111,10 @@ def upgrade() -> None:
         sa.Column(
             "job_description_id",
             sa.Integer,
-            ForeignKey("pdfs.id"),
+            ForeignKey("job_descriptions.id"),
             nullable=False,
         ),
-        sa.Column("parsed_text", sa.Text, nullable=True),
+        sa.Column("parsed_skills", sa.Text, nullable=True),
         sa.Column("created_date", sa.DateTime, nullable=False),
     )
     print("Migration 2410a61e112e applied successfully.")

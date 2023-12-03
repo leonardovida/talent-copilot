@@ -23,7 +23,7 @@ async def get_text_dao(
 async def get_text(pdf_id: int, text_dao: TextDAO = Depends(get_text_dao)) -> TextDTO:
     """Get the text for a given image ID.
 
-    :param image_id: ID of the image to retrieve text for.
+    :param pdf_id: ID of the image to retrieve text for.
     :param text_dao: The TextDAO object to use for database operations.
     :return: TextDTO of the retrieved text.
     :raises HTTPException: If the text is not found.
@@ -42,7 +42,7 @@ async def save_text(
 ) -> TextDTO:
     """Save text for a PDF.
 
-    :param image_id: ID of the PDF to save text for.
+    :param pdf_id: ID of the PDF to save text for.
     :param text: The text to save.
     :param text_dao: The TextDAO object to use for database operations.
     :return: TextDTO of the saved text.

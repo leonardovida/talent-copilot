@@ -1,9 +1,12 @@
-from openai import OpenAI
+import logging
 
-from cv_copilot.services.text_processing.prompt_templates import (
-    system_prompt_cv,
+import instructor
+from openai import AsyncOpenAI, OpenAI
+
+from cv_copilot.services.llm.models.skills import JobDescriptionExtract
+from cv_copilot.services.llm.prompt_templates.cv import system_prompt_cv, user_prompt_cv
+from cv_copilot.services.llm.prompt_templates.job_descriptions import (
     system_prompt_job_description,
-    user_prompt_cv,
     user_prompt_job_description,
 )
 from cv_copilot.settings import settings
@@ -12,12 +15,13 @@ from cv_copilot.web.dto.job_description.schema import JobDescriptionModel
 
 async def parse_skills_job_description(
     job_description: JobDescriptionModel,
-) -> str:
+) -> JobDescriptionExtract:
     """Parse the skills from the job description.
 
     :param pdf_id: The ID of the PDF to parse the skills from.
+    :return: The parsed skills.
     """
-    client = OpenAI(api_key=settings.openai_api_key)
+    aclient = instructor.apatch(AsyncOpenAI(api_key=settings.openai_api_key))
 
     formatted_user_prompt = user_prompt_job_description.format(
         job_description=job_description.description,
@@ -28,16 +32,21 @@ async def parse_skills_job_description(
         {"role": "user", "content": formatted_user_prompt},
     ]
 
-    response = client.chat.completions.create(
+    logging.info(f"Sending messages to OpenAI: {messages}")
+    response = await aclient.chat.completions.create(
         model=settings.gpt4_model_name,
         messages=messages,
-        response_format=settings.response_format,  # always return valid JSON
+        response_model=JobDescriptionExtract,  # instructor injection
+        response_format=settings.response_format,
         seed=settings.seed,
         max_tokens=settings.max_tokens,
         temperature=settings.temperature,
     )
 
-    return response.choices[0].message.content
+    if response:
+        return response
+    else:
+        raise ValueError("No content received from OpenAI response")
 
 
 async def parse_skills_cv(pdf_id: int) -> str:

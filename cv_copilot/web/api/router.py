@@ -5,6 +5,7 @@ from cv_copilot.web.api import (
     echo,
     job_descriptions,
     monitoring,
+    parsed_job_descriptions,
     pdfs,
     redis,
     texts,
@@ -24,3 +25,8 @@ api_router.include_router(
 )
 api_router.include_router(redis.router, prefix="/redis", tags=["redis"])
 api_router.include_router(texts.router, prefix="/texts", tags=["text"])
+api_router.include_router(
+    parsed_job_descriptions.router,
+    prefix="/parsed-job-descriptions",
+    tags=["parsed-job-descriptions"],
+)

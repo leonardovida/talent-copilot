@@ -26,17 +26,13 @@ class JobDescriptionModel(Base):
     )
     updated_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    pdfs = relationship("PDFModel", back_populates="job_description")
-    images = relationship("ImageModel", back_populates="job_description")
-    # One to one relationship with parsed_job_descriptions
+    pdfs = relationship("PDFModel", cascade="all, delete-orphan")
+    images = relationship("ImageModel", cascade="all, delete-orphan")
     parsed_job_description = relationship(
         "ParsedJobDescriptionModel",
-        back_populates="job_description",
+        cascade="all, delete-orphan",
     )
-    parsed_text = relationship(
-        "ParsedTextModel",
-        back_populates="job_description",
-    )
+    parsed_text = relationship("ParsedTextModel", cascade="all, delete-orphan")
 
 
 class ParsedJobDescriptionModel(Base):
@@ -50,7 +46,7 @@ class ParsedJobDescriptionModel(Base):
         ForeignKey("job_descriptions.id"),
         nullable=False,
     )
-    parsed_text: Mapped[JSONB] = mapped_column(JSONB, nullable=False)
+    parsed_skills: Mapped[JSONB] = mapped_column(JSONB, nullable=False)
     created_date: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,

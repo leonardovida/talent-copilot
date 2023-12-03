@@ -1,48 +1,28 @@
 import asyncio
 import logging
 
-from fastapi import HTTPException
 from fastapi.param_functions import Depends
 
 from cv_copilot.db.dao.images import ImageDAO
 from cv_copilot.db.dao.pdfs import PDFDAO
 from cv_copilot.db.dao.texts import TextDAO
-from cv_copilot.services.pdf.openai_integrations import get_text_from_image
-from cv_copilot.services.pdf.pdf_processing import encode_pdf_pages
+from cv_copilot.db.models.texts import TextModel
+from cv_copilot.services.llm.utils import get_text_from_image
+from cv_copilot.services.pdf.processing import encode_pdf_pages
 from cv_copilot.settings import settings
 
 
-async def process_pdf_workflow(pdf_id: int, text_dao: TextDAO = Depends()) -> bool:
+async def process_pdf_workflow(pdf_id: int, text_dao: TextDAO = Depends()) -> TextModel:
     """
     Process the PDF workflow which includes converting PDF to JPG and then to text.
 
     :param pdf_id: The ID of the PDF to process.
-    :return: True if the process is successful, False otherwise.
-    :raises: HTTPException if the PDF cannot be found.
-    :raises: IOError if the PDF cannot be converted to JPG.
-    :raises: Exception if the JPG cannot be converted to text.
-    :raises: Exception if the text cannot be saved to the database.
+    :param text_dao: The TextDAO object to use for database operations.
+    :return: The text of the PDF.
     """
-    try:
-        await convert_pdf_to_jpg(pdf_id)
-        text = await convert_jpg_to_text(pdf_id)
-        await text_dao.save_text(pdf_id=pdf_id, text=text)
-        return True
-    except HTTPException as http_err:
-        logging.error(
-            f"HTTP error occurred while processing PDF with id {pdf_id}: {http_err}",
-        )
-        return False
-    except IOError as io_err:
-        logging.error(
-            f"I/O error occurred while processing PDF with id {pdf_id}: {io_err}",
-        )
-        return False
-    except Exception as e:
-        logging.error(
-            f"An unexpected error occurred while processing PDF with id {pdf_id}: {e}",
-        )
-        return False
+    await convert_pdf_to_jpg(pdf_id)
+    text = await convert_jpg_to_text(pdf_id)
+    return await text_dao.save_text(pdf_id=pdf_id, text=text)
 
 
 async def convert_pdf_to_jpg(
@@ -106,24 +86,3 @@ async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> s
             )
 
     return pdf_full_text
-
-
-# async def extract_skills_job_description(pdf_id: int):
-#     """Retrieve the job description.
-
-#     :param pdf_id: The ID of the PDF to retrieve the job description for.
-#     """
-
-
-# async def extract_skills_cv(pdf_id: int):
-#     """Retrieve the job description.
-
-#     :param pdf_id: The ID of the PDF to retrieve the job description for.
-#     """
-
-
-# async def evaluate_cv(pdf_id: int):
-#     """Evaluate the CV.
-
-#     :param pdf_id: The ID of the PDF to evaluate.
-#     """

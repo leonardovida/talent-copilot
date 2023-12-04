@@ -43,7 +43,7 @@ services:
     - cv_copilot.tkq:broker
 
   db:
-    image: postgres:13.8-bullseye
+    image: postgres:16.1-bullseye
     hostname: cv_copilot-db
     environment:
       POSTGRES_PASSWORD: "cv_copilot"
@@ -73,7 +73,7 @@ services:
         condition: service_healthy
 
   redis:
-    image: bitnami/redis:6.2.5
+    image: bitnami/redis:6.2.14
     hostname: "cv_copilot-redis"
     restart: always
     environment:
@@ -83,7 +83,6 @@ services:
       interval: 1s
       timeout: 3s
       retries: 50
-
 
 
 volumes:

@@ -81,7 +81,15 @@ ignore =
   ; weird intends
   RST206,
   ; Too complex f string
-  WPS237
+  WPS237,
+  ; Too deep nesting
+  WPS220,
+  ; Found magic numbers
+  WPS432,
+  # Line too long
+  E501,
+  # Found line with high Jones Complexity
+  WPS231
 
 per-file-ignores =
   ; all tests

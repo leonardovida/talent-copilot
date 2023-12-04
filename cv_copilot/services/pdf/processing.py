@@ -1,16 +1,18 @@
 import base64
 import logging
 from io import BytesIO
-from typing import List, Optional
+from typing import List
 
 import pdf2image
+
+from cv_copilot.db.models.pdfs import PDFModel
 
 
 class PDFConversionError(Exception):
     """Exception raised when a PDF cannot be converted to JPG."""
 
 
-def encode_pdf_pages(pdf: Optional[bytes], pdf_id: int) -> List[str]:
+def encode_pdf_pages(pdf: PDFModel, pdf_id: int) -> List[str]:
     """
     Converts each page of a PDF file to JPG images and encodes them in base64.
 
@@ -26,9 +28,11 @@ def encode_pdf_pages(pdf: Optional[bytes], pdf_id: int) -> List[str]:
     """
     encoded_images = []
     try:
-        if pdf is None:
+        logging.info(f"Converting PDF with ID {pdf_id} to JPG")
+        if pdf.file is None:
             raise ValueError("PDF file is None")
-        images = pdf2image.pdf2image.convert_from_bytes(pdf)
+        logging.info(f"PDF file length: {len(pdf.file)}")
+        images = pdf2image.pdf2image.convert_from_bytes(pdf.file)
 
         for image in images:
             buffer = BytesIO()

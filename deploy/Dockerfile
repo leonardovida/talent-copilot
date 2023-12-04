@@ -1,8 +1,8 @@
-FROM python:3.11.4-slim-bullseye as prod
+FROM python:3.11.6-slim-bullseye as prod
 RUN apt-get update && apt-get install -y \
   gcc \
+  poppler-utils \
   && rm -rf /var/lib/apt/lists/*
-
 
 RUN pip install poetry==1.7.1
 
@@ -20,12 +20,16 @@ RUN apt-get purge -y \
   gcc \
   && rm -rf /var/lib/apt/lists/*
 
-# Copying actuall application
+# Copying actual application
 COPY . /app/src/
 RUN poetry install --only main
 
 CMD ["/usr/local/bin/python", "-m", "cv_copilot"]
 
 FROM prod as dev
+
+RUN apt-get update && apt-get install -y \
+  poppler-utils \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN poetry install

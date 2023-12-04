@@ -24,16 +24,20 @@ class PDFModel(Base):
         ForeignKey("job_descriptions.id"),
         nullable=False,
     )
-    created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     file: Mapped[bytes] = mapped_column(BYTEA, nullable=True)
     s3_url: Mapped[HttpUrl] = mapped_column(
         String(length=2000),  # noqa: WPS432
         nullable=True,
     )
+    created_date: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
 
-    images = relationship("ImageModel", back_populates="pdfs")
-    job_descriptions = relationship(
+    job_description = relationship(
         "JobDescriptionModel",
         back_populates="pdfs",
-        uselist=False,
     )
+    images = relationship("ImageModel", cascade="all, delete-orphan")
+    text = relationship("TextModel", cascade="all, delete-orphan")

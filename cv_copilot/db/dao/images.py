@@ -25,6 +25,7 @@ class ImageDAO:
         result = await self.session.execute(
             select(ImageModel).where(ImageModel.pdf_id == pdf_id),
         )
+        logging.info(f"Retrieved {len(result.scalars().all())} images for PDF {pdf_id}")
         return list(result.scalars().all())
 
     async def add_image(self, image: ImageModel) -> ImageModel:

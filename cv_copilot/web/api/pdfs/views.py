@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import List, Union
 
@@ -5,9 +6,10 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.param_functions import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from cv_copilot.db.dao.images import ImageDAO
 from cv_copilot.db.dao.job_descriptions import ParsedJobDescriptionDAO
 from cv_copilot.db.dao.pdfs import PDFDAO
-from cv_copilot.db.dao.texts import ParsedTextDAO
+from cv_copilot.db.dao.texts import ParsedTextDAO, TextDAO
 from cv_copilot.db.dependencies import get_db_session
 from cv_copilot.services.pdf.workflow import process_pdf_workflow
 from cv_copilot.services.text.workflow import workflow_evaluate_cv
@@ -17,37 +19,18 @@ from cv_copilot.web.dto.texts.schema import ParsedTextDTO
 router = APIRouter()
 
 
-async def get_pdf_dao(
-    session: AsyncSession = Depends(get_db_session),
-) -> PDFDAO:
-    """Dependency for PDFDAO.
+def get_dao_dependency(dao_class):
+    async def dependency(session: AsyncSession = Depends(get_db_session)) -> dao_class:
+        return dao_class(session)
 
-    :param session: AsyncSession dependency.
-    :return: PDFDAO instance.
-    """
-    return PDFDAO(session)
+    return dependency
 
 
-async def get_text_dao(
-    session: AsyncSession = Depends(get_db_session),
-) -> ParsedTextDAO:
-    """Dependency for TextDAO.
-
-    :param session: AsyncSession dependency.
-    :return: TextDAO instance.
-    """
-    return ParsedTextDAO(session)
-
-
-async def get_job_description_dao(
-    session: AsyncSession = Depends(get_db_session),
-) -> ParsedJobDescriptionDAO:
-    """Dependency for job description DAO.
-
-    :param session: AsyncSession dependency.
-    :return: Job description DAO instance.
-    """
-    return ParsedJobDescriptionDAO(session)
+get_pdf_dao = get_dao_dependency(PDFDAO)
+get_text_dao = get_dao_dependency(TextDAO)
+get_parsed_text_dao = get_dao_dependency(ParsedTextDAO)
+get_job_description_dao = get_dao_dependency(ParsedJobDescriptionDAO)
+get_image_dao = get_dao_dependency(ImageDAO)
 
 
 @router.get("/", response_model=List[PDFModelDTO])
@@ -93,6 +76,47 @@ async def upload_pdf(
     return pdf_model  # noqa: WPS331
 
 
+@router.get("/{pdf_id}/process", response_model=PDFModelDTO)
+async def process_pdf(
+    job_id: int,
+    pdf_id: int,
+    parsed_text_dao: ParsedTextDAO = Depends(get_parsed_text_dao),
+    parsed_job_description_dao: ParsedJobDescriptionDAO = Depends(
+        get_job_description_dao,
+    ),
+    pdf_dao: PDFDAO = Depends(get_pdf_dao),
+    image_dao: ImageDAO = Depends(get_image_dao),
+    text_dao: TextDAO = Depends(get_text_dao),
+) -> ParsedTextDTO:
+    """
+    Trigger background tasks to process the PDF.
+
+    :param job_id: ID of the job description related to the PDF.
+    :param pdf_id: ID of the PDF to process.
+    :param parsed_text_dao: DAO for ParsedText models.
+    :param parsed_job_description_dao: DAO for ParsedJobDescription models.
+    """
+    # Trigger background tasks to process the PDF
+    try:
+        text = await process_pdf_workflow(
+            pdf_id=pdf_id,
+            pdf_dao=pdf_dao,
+            image_dao=image_dao,
+            text_dao=text_dao,
+        )
+        parsed_text = await workflow_evaluate_cv(
+            text=text,
+            job_id=job_id,
+            pdf_id=pdf_id,
+            parsed_text_dao=parsed_text_dao,
+            parsed_job_description_dao=parsed_job_description_dao,
+        )
+        return ParsedTextDTO.from_orm(parsed_text)
+    except Exception as e:
+        logging.error(f"Error processing PDF ID {pdf_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 @router.get("/{pdf_id}", response_model=PDFModelDTO)
 async def get_pdf(
     pdf_id: int,
@@ -112,30 +136,25 @@ async def get_pdf(
     return PDFModelDTO.from_orm(pdf)
 
 
-@router.post("/{pdf_id}/process", response_model=PDFModelDTO)
-async def process_pdf(
-    job_id: int,
+@router.delete("/{pdf_id}", response_model=dict)
+async def delete_pdf(
     pdf_id: int,
-    parsed_text_dao: ParsedTextDAO = Depends(get_text_dao),
-    parsed_job_description_dao: ParsedJobDescriptionDAO = Depends(
-        get_job_description_dao,
-    ),
-) -> ParsedTextDTO:
+    pdf_dao: PDFDAO = Depends(get_pdf_dao),
+) -> dict:
     """
-    Trigger background tasks to process the PDF.
+    Delete a single pdf from the database by its ID.
 
-    :param job_id: ID of the job description related to the PDF.
-    :param pdf_id: ID of the PDF to process.
-    :param parsed_text_dao: DAO for ParsedText models.
-    :param parsed_job_description_dao: DAO for ParsedJobDescription models.
+    :param pdf_id: the ID of the pdf to delete.
+    :param pdf_dao: DAO for PDFs models.
+    :return: Confirmation message.
+    :raises HTTPException: if the pdf is not found or cannot be deleted.
     """
-    # Trigger background tasks to process the PDF
-    text = await process_pdf_workflow(pdf_id)
-    parsed_text = await workflow_evaluate_cv(
-        text=text,
-        job_id=job_id,
-        pdf_id=pdf_id,
-        parsed_text_dao=parsed_text_dao,
-        parsed_job_description_dao=parsed_job_description_dao,
-    )
-    return ParsedTextDTO.from_orm(parsed_text)
+    try:
+        success = await pdf_dao.delete_pdf_by_id(pdf_id=pdf_id)
+        if success:
+            return {"detail": "PDF successfully deleted"}
+        else:
+            raise HTTPException(status_code=404, detail="PDF not found")
+    except Exception as e:
+        logging.error(f"Error deleting PDF ID {pdf_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e

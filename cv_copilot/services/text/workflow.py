@@ -47,20 +47,26 @@ async def workflow_evaluate_cv(
     :param parsed_text: DAO for ParsedText models.
     :return: The parsed text.
     """
-    # Get the parsed job description skills from DB
-    parsed_job_description = (
-        await parsed_job_description_dao.get_parsed_job_description_by_id(text.id)
-    )
-    if parsed_job_description is None:
-        raise ValueError("Parsed job description not found")
-    # Get the parsed job description skills from DB
-    text_extracted = await evaluate_cv(
-        parsed_job_description=parsed_job_description,
-        parsed_text=text,
-    )
-    # Save and return the parsed text
-    return await parsed_text_dao.save_parsed_text(
-        job_id=job_id,
-        pdf_id=pdf_id,
-        parsed_text=text_extracted,
-    )
+    try:
+        # Get the parsed job description skills from DB
+        parsed_job_description = (
+            await parsed_job_description_dao.get_parsed_job_description_by_id(text.id)
+        )
+        if parsed_job_description is None:
+            raise ValueError("Parsed job description not found")
+        # Get the parsed job description skills from DB
+        text_extracted = await evaluate_cv(
+            parsed_job_description=parsed_job_description,
+            parsed_text=text,
+        )
+        # Save and return the parsed text
+        return await parsed_text_dao.save_parsed_text(
+            job_id=job_id,
+            pdf_id=pdf_id,
+            parsed_text=text_extracted,
+        )
+    except Exception as e:
+        logging.error(
+            f"Error evaluating CV for PDF ID {pdf_id} and Job ID {job_id}: {e}",
+        )
+        raise

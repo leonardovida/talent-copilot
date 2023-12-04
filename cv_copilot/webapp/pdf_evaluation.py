@@ -19,21 +19,18 @@ def upload_pdf(job_id: str) -> None:
     )
     if st.button("Upload", key=f"upload_button_{job_id}"):
         if pdf_file is not None:
-            # Create the files dictionary for the request
             files = {"pdf_file": (pdf_file.name, pdf_file, "application/pdf")}
             data = {
                 "name": pdf_file.name,
                 "job_id": job_id,
                 "created_date": str(datetime.now()),
             }
-            req = requests.Request("POST", f"{API_ENDPOINT}", files=files, data=data)
-            prepared = req.prepare()
             response = requests.post(API_ENDPOINT, files=files, data=data, timeout=5)
             if 200 <= response.status_code < 300:
                 st.success("CV uploaded")
             else:
                 st.error(
-                    f"Failed to upload CV: {response.status_code}. {prepared.body}",
+                    f"Failed to upload CV: {response.status_code} - {response}",
                 )
         else:
             st.error("Error. Please upload a CV in PDF format.")
@@ -64,25 +61,33 @@ def process_cv(job_id: str, cv_id: str) -> None:
     :param job_id: The ID of the job description to process the CV for.
     :param cv_id: The ID of the CV to process.
     """
-    params = {"job_id": job_id}
+    params = {"job_id": job_id, "pdf_id": cv_id}
     response = requests.get(
         f"{API_ENDPOINT}/{cv_id}/process",
-        timeout=240,
+        timeout=600,
         params=params,
     )
     if response.status_code == 200:
         st.success("CV evaluated!")
-        parsed_job = response.json()
-        st.write(parsed_job)
+        st.write(response.json())
     else:
-        st.error("Failed to evaluate CV")
-        st.write(response)
+        st.error(f"Failed to evaluate CV - {response.status_code}, {response.text}")
+
+
+def delete_cv(cv_id: str) -> None:
+    """Delete a CV.
+
+    :param cv_id: The ID of the CV to delete.
+    """
+    response = requests.delete(f"{API_ENDPOINT}/{cv_id}", timeout=5)
+    if response.status_code == 200:
+        st.success("CV deleted!")
+    else:
+        st.error(f"Failed to delete CV - {response.status_code}, {response.text}")
 
 
 def display_recent_cvs(job_id: str, limit: str = "10"):
     """Display the most recent CVs.
-
-    This function will be modified into 'display_top_k_cvs' in the future.
 
     :param job_id: The ID of the job description to display the CVs for.
     :param limit: The number of CVs to display.
@@ -90,10 +95,16 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
     recent_cvs = get_cv_list(job_id, limit)
 
     for index, cv in enumerate(recent_cvs):
-        col1, col2 = st.columns([4, 1])
+        col1, col2, col3 = st.columns([8, 1, 1])
         col1.text(cv["name"])
 
         with col2:
             with st.spinner("Evaluating..."):
-                if st.button("Evaluate CV", key=f"evaluate_{cv['id']}"):
+                evaluate_key = f"evaluate_{cv['id']}"
+                if st.button("Evaluate CV", key=evaluate_key):
                     process_cv(job_id, cv["id"])
+
+        with col3:
+            delete_key = f"delete_cv_{cv['id']}"
+            if st.button("Delete CV", key=delete_key):
+                delete_cv(cv["id"])

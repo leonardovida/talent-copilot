@@ -1,8 +1,6 @@
 import asyncio
 import logging
 
-from fastapi.param_functions import Depends
-
 from cv_copilot.db.dao.images import ImageDAO
 from cv_copilot.db.dao.pdfs import PDFDAO
 from cv_copilot.db.dao.texts import TextDAO
@@ -12,7 +10,12 @@ from cv_copilot.services.pdf.processing import encode_pdf_pages
 from cv_copilot.settings import settings
 
 
-async def process_pdf_workflow(pdf_id: int, text_dao: TextDAO = Depends()) -> TextModel:
+async def process_pdf_workflow(
+    pdf_id: int,
+    pdf_dao: PDFDAO,
+    image_dao: ImageDAO,
+    text_dao: TextDAO,
+) -> TextModel:
     """
     Process the PDF workflow which includes converting PDF to JPG and then to text.
 
@@ -20,15 +23,19 @@ async def process_pdf_workflow(pdf_id: int, text_dao: TextDAO = Depends()) -> Te
     :param text_dao: The TextDAO object to use for database operations.
     :return: The text of the PDF.
     """
-    await convert_pdf_to_jpg(pdf_id)
-    text = await convert_jpg_to_text(pdf_id)
-    return await text_dao.save_text(pdf_id=pdf_id, text=text)
+    try:
+        await convert_pdf_to_jpg(pdf_id, pdf_dao, image_dao)
+        text = await convert_jpg_to_text(pdf_id, image_dao)
+        return await text_dao.save_text(pdf_id=pdf_id, text=text)
+    except Exception as e:
+        logging.error(f"Error processing PDF workflow for PDF ID {pdf_id}: {e}")
+        raise
 
 
 async def convert_pdf_to_jpg(
     pdf_id: int,
-    pdf_dao: PDFDAO = Depends(),
-    image_dao: ImageDAO = Depends(),
+    pdf_dao: PDFDAO,
+    image_dao: ImageDAO,
 ) -> None:
     """Convert a PDF to a list of JPG images.
 
@@ -47,7 +54,7 @@ async def convert_pdf_to_jpg(
 
     # Proceed with encoding if PDF is found
     encoded_images = encode_pdf_pages(
-        pdf=pdf.file,
+        pdf=pdf,
         pdf_id=pdf_id,
     )
 
@@ -59,8 +66,11 @@ async def convert_pdf_to_jpg(
     )
 
 
-async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO = Depends()) -> str:
+async def convert_jpg_to_text(pdf_id: int, image_dao: ImageDAO) -> str:
     """Convert the images of a PDF to text using OpenAI.
+
+    #TODO: this function gets ALL images for a PDF, even if
+    there are duplicates images! We should only retrieve the "latest" image
 
     :param: pdf_id: The ID of the PDF to convert to text.
     :param: image_dao: The ImageDAO object to use for database operations.

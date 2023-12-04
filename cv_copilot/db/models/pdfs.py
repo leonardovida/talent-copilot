@@ -39,5 +39,5 @@ class PDFModel(Base):
         "JobDescriptionModel",
         back_populates="pdfs",
     )
-    images = relationship("ImageModel")
-    text = relationship("TextModel")
+    images = relationship("ImageModel", cascade="all, delete-orphan")
+    text = relationship("TextModel", cascade="all, delete-orphan")

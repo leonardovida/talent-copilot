@@ -30,7 +30,7 @@ class PDFDAO:
         :raises HTTPException: If the PDF cannot be uploaded.
         """
         try:
-            file_contents = pdf_file.file.read()
+            file_contents = await pdf_file.read()
             new_pdf = PDFModel(
                 name=pdf_input.name,
                 job_id=pdf_input.job_id,
@@ -41,12 +41,13 @@ class PDFDAO:
             self.session.add(new_pdf)
             await self.session.commit()
             await self.session.refresh(new_pdf)
+            logging.info(f"PDF file weight: {len(file_contents)}")
             return PDFModelDTO.from_orm(new_pdf)
         except Exception as e:
             logging.error(f"Error uploading PDF: {e}")
             raise HTTPException(status_code=500, detail=str(e)) from e
         finally:
-            pdf_file.file.close()
+            await pdf_file.close()
 
     async def get_pdf_by_id(
         self,
@@ -61,7 +62,9 @@ class PDFDAO:
         result = await self.session.execute(
             select(PDFModel).where(PDFModel.id == pdf_id),
         )
-        return result.scalars().first()
+        pdf = result.scalars().first()
+        logging.info(f"PDF result: {pdf} - ID: {pdf_id}")
+        return pdf
 
     async def get_all_pdfs(
         self,
@@ -107,3 +110,22 @@ class PDFDAO:
             query = query.where(PDFModel.job_id == job_id)
         rows = await self.session.execute(query)
         return [PDFModelDTO.from_orm(pdf) for pdf in rows.scalars().fetchall()]
+
+    async def delete_pdf_by_id(self, pdf_id: int) -> bool:
+        """
+        Delete a PDF by its ID.
+
+        :param pdf_id: ID of the PDF to delete.
+        :return: True if deletion was successful, False otherwise.
+        """
+        try:
+            pdf_to_delete = await self.get_pdf_by_id(pdf_id)
+            if pdf_to_delete:
+                await self.session.delete(pdf_to_delete)
+                await self.session.commit()
+                return True
+            return False
+        except Exception as e:
+            logging.error(f"Error deleting PDF ID {pdf_id}: {e}")
+            await self.session.rollback()
+            return False

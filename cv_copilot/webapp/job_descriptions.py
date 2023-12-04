@@ -46,7 +46,7 @@ def display_delete_job_description_button(job_id: str) -> None:
 
     :param job_id: The ID of the job description to delete.
     """
-    if st.button("Delete job description", key=f"delete_{job_id}"):
+    if st.button("Delete job description", key=f"delete_job_{job_id}"):
         response = requests.delete(
             f"{API_ENDPOINT}/{job_id}/",
             timeout=10,

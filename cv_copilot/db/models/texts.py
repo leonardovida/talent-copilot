@@ -22,9 +22,7 @@ class TextModel(Base):
     )
 
     pdf = relationship("PDFModel", back_populates="text")
-    parsed_text = relationship(
-        "ParsedTextModel",
-    )
+    parsed_text = relationship("ParsedTextModel", dependent="all, delete-orphan")
 
 
 class ParsedTextModel(Base):

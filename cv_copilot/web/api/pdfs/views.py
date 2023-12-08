@@ -76,7 +76,7 @@ async def upload_pdf(
     return pdf_model  # noqa: WPS331
 
 
-@router.get("/{pdf_id}/process", response_model=PDFModelDTO)
+@router.get("/{pdf_id}/process", response_model=ParsedTextDTO)
 async def process_pdf(
     job_id: int,
     pdf_id: int,
@@ -98,12 +98,14 @@ async def process_pdf(
     """
     # Trigger background tasks to process the PDF
     try:
+        logging.info(f"Workflow: Process PDF ID {pdf_id}")
         text = await process_pdf_workflow(
             pdf_id=pdf_id,
             pdf_dao=pdf_dao,
             image_dao=image_dao,
             text_dao=text_dao,
         )
+        logging.info(f"Workflow: Evaluate CV ID {pdf_id}")
         parsed_text = await workflow_evaluate_cv(
             text=text,
             job_id=job_id,

@@ -1,6 +1,6 @@
 from cv_copilot.db.models.job_descriptions import ParsedJobDescriptionModel
 from cv_copilot.db.models.texts import TextModel
-from cv_copilot.services.llm.models.skills import SkillsExtract
+from cv_copilot.services.llm.models.skills import EvaluationExtract, SkillsExtract
 from cv_copilot.services.llm.prompt_templates.cv import system_prompt_cv, user_prompt_cv
 from cv_copilot.services.llm.prompt_templates.job_descriptions import (
     system_prompt_job_description,
@@ -53,5 +53,5 @@ async def evaluate_cv(
     return await oa_async_request(
         system_prompt=system_prompt_cv,
         user_prompt=formatted_user_prompt,
-        response_model=SkillsExtract,
+        response_model=EvaluationExtract,
     )

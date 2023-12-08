@@ -163,6 +163,9 @@ class ParsedJobDescriptionDAO:
                 ParsedJobDescriptionModel.job_description_id == job_description_id,
             ),
         )
+        logging.info(
+            f"Retrieved parsed job description with ID: {job_description_id}",
+        )
         return result.scalar_one_or_none()
 
     async def save_parsed_job_description(

@@ -89,9 +89,7 @@ class Settings(BaseSettings):
 
     # Settings for GPT-4 Vision
     vision_model_name: str = "gpt-4-vision-preview"
-    vision_prompt: str = (
-        "Read all the text in this image and give it back into JSON format."
-    )
+    vision_prompt: str = "Read all the text in this image and give it back as JSON."
 
     # Settings for GPT-4
     gpt4_model_name: str = "gpt-4-1106-preview"  # "gpt-3.5-turbo-1106"

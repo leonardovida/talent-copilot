@@ -43,5 +43,5 @@ class ParsedTextDTO(BaseModel):
         return cls(
             id=obj.id,
             job_description_id=obj.job_description_id,
-            parsed_skills=obj.parsed_skills,
+            parsed_skills=parsed_skills,
         )

@@ -45,6 +45,8 @@ services:
   db:
     image: postgres:16.1-bullseye
     hostname: cv_copilot-db
+    ports:
+    - "5432:5432"   # Expose Postgres port to all interfaces
     environment:
       POSTGRES_PASSWORD: "cv_copilot"
       POSTGRES_USER: "cv_copilot"

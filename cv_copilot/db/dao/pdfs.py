@@ -63,7 +63,7 @@ class PDFDAO:
             select(PDFModel).where(PDFModel.id == pdf_id),
         )
         pdf = result.scalars().first()
-        logging.info(f"PDF result: {pdf} - ID: {pdf_id}")
+        logging.info(f"Get pdf by id: {pdf_id}")
         return pdf
 
     async def get_all_pdfs(

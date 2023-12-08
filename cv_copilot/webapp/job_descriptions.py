@@ -10,7 +10,7 @@ API_ENDPOINT = "http://localhost:8000/api/job-descriptions"
 API_ENDPOINT_PARSED = "http://localhost:8000/api/parsed-job-descriptions"
 
 
-def get_job_descriptions(limit: int) -> List[str]:
+def get_job_descriptions(limit: int) -> List[Dict[str, str]]:
     """Get the most recent job descriptions from the API.
 
     :param limit: The number of job descriptions to return.
@@ -53,10 +53,11 @@ def display_delete_job_description_button(job_id: str) -> None:
         )
         if response.status_code == 200:
             st.success("Job description deleted!")
-            # Remove the job from the list or refresh the page to reflect the deletion
+            # Refresh page
+            st.experimental_rerun()
         else:
             st.error(
-                f"Failed to delete job description {job_id}: {response.status_code}, {response.text}",
+                f"Failed to delete job description {job_id}: {response.status_code}, {response}",
             )
 
 
@@ -64,6 +65,8 @@ def display_skills_by_category_and_type(
     skills_extract: ParsedJobDescriptionDTO,
 ) -> None:
     """Display skills grouped by category and type.
+
+    TODO: Parse the response using the pydantic model instead of a dict.
 
     :param skills_extract: The SkillsExtract object containing required and nice to have skills.
     """
@@ -207,7 +210,7 @@ def list_job_descriptions_and_cvs(job_descriptions: List[Dict[str, str]]) -> Non
             upload_pdf(job["id"])
 
             st.markdown("<br>", unsafe_allow_html=True)
-            display_recent_cvs(job["id"], limit=10)
+            display_recent_cvs(job["id"], limit="10")
 
             display_delete_job_description_button(job["id"])
 

@@ -1,8 +1,8 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from fastapi import Depends
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cv_copilot.db.dependencies import get_db_session
@@ -15,18 +15,35 @@ class ImageDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_images_by_id(self, pdf_id: int) -> List[ImageModel]:
+    async def get_images_by_pdf_id(self, pdf_id: int) -> Sequence[ImageModel]:
         """
         Retrieve all the parsed images given a pdf_id.
 
         :param pdf_id: ID of the PDF to retrieve images for.
         :return: List of ImageModel instances associated with the PDF.
         """
+        await self.session.commit()
         result = await self.session.execute(
             select(ImageModel).where(ImageModel.pdf_id == pdf_id),
         )
-        logging.info(f"Retrieved {len(result.scalars().all())} images for PDF {pdf_id}")
-        return list(result.scalars().all())
+        images = result.scalars().all()
+        logging.info(f"Retrieved {images} images for PDF {pdf_id}")
+        return images
+
+    async def get_images_by_ids(self, image_ids: List[int]) -> Sequence[ImageModel]:
+        """
+        Retrieve all the parsed images given a pdf_id.
+
+        :param image_ids: IDs of the images to retrieve.
+        :return: List of ImageModel instances associated with the PDF.
+        """
+        await self.session.commit()
+        result = await self.session.execute(
+            select(ImageModel).where(ImageModel.id.in_(image_ids)),
+        )
+        images = result.scalars().all()
+        logging.info(f"Retrieved {len(images)} images for image IDs {image_ids}")
+        return images
 
     async def add_image(self, image: ImageModel) -> ImageModel:
         """
@@ -36,8 +53,9 @@ class ImageDAO:
         :return: The added ImageModel instance.
         """
         self.session.add(image)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(image)
+        await self.session.commit()
         return image
 
     async def save_encoded_images(
@@ -55,21 +73,21 @@ class ImageDAO:
         :return: List of IDs of the added images.
         """
         # Create a list of ImageModel instances
-        parsed_pdf_instances = [
-            ImageModel(pdf_id=pdf_id, job_id=job_id, encoded_image=image, text=None)
+        encoded_image_models = [
+            ImageModel(pdf_id=pdf_id, job_id=job_id, encoded_image=image)
             for image in encoded_images
         ]
 
         # Add all instances to the session and commit
-        self.session.add_all(parsed_pdf_instances)
+        self.session.add_all(encoded_image_models)
         await self.session.commit()
 
         image_ids = []
-        for image in parsed_pdf_instances:
+        for image in encoded_image_models:
             await self.session.refresh(image)
             image_ids.append(image.id)
 
-        logging.info(f"Saved {len(image_ids)} images to the database for PDF {pdf_id}")
+        logging.info(f"Saved {len(image_ids)} images with id {image_ids}")
         return image_ids
 
     async def get_image_by_id(self, image_id: int) -> Optional[ImageModel]:
@@ -92,17 +110,5 @@ class ImageDAO:
         """
         await self.session.execute(
             delete(ImageModel).where(ImageModel.id == image_id),
-        )
-        await self.session.commit()
-
-    async def update_image_text(self, image_id: int, text: str) -> None:
-        """
-        Update the 'text' column of an image with the parsed text.
-
-        :param image_id: ID of the image to update.
-        :param text: Parsed text to be saved in the 'text' column.
-        """
-        await self.session.execute(
-            update(ImageModel).where(ImageModel.id == image_id).values(text=text),
         )
         await self.session.commit()

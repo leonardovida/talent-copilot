@@ -14,11 +14,6 @@ async def get_text_from_image(image: str) -> httpx.Response:
     :param image: The image file encoded in base64.
     :return: The full response from the API.
     """
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.openai_api_key}",
-    }
-
     payload = {
         "model": settings.vision_model_name,
         "messages": [
@@ -39,13 +34,8 @@ async def get_text_from_image(image: str) -> httpx.Response:
         "max_tokens": settings.max_tokens,
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            settings.openai_url_chat,
-            headers=headers,
-            json=payload,
-        )
-    return response
+    client = OpenAI(api_key=settings.openai_api_key)
+    return client.chat.completions.create(**payload)
 
 
 async def oa_async_request(

@@ -26,10 +26,6 @@ class ImageModel(Base):
         Text,  # Using Text type for base64 encoded image
         nullable=False,
     )
-    text: Mapped[str] = mapped_column(
-        Text,  # Using Text type for extracted text
-        nullable=True,  # Initially nullable, will be populated later
-    )
     created_date: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,

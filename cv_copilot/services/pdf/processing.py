@@ -44,5 +44,5 @@ def encode_pdf_pages(pdf: PDFModel, pdf_id: int) -> List[str]:
         logging.error(f"Error in converting PDF to JPG: {e}")
         raise PDFConversionError(f"Error in converting PDF to JPG: {e}") from e
 
-    logging.info(f"Successfully converted PDF to JPG: for PDF with ID {pdf_id}")
+    logging.info(f"Converted PDF with ID {pdf_id} to JPG")
     return encoded_images

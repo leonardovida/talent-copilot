@@ -50,7 +50,7 @@ async def workflow_evaluate_cv(
     try:
         # Get the parsed job description skills from DB
         parsed_job_description = (
-            await parsed_job_description_dao.get_parsed_job_description_by_id(text.id)
+            await parsed_job_description_dao.get_parsed_job_description_by_id(job_id)
         )
         if parsed_job_description is None:
             raise ValueError("Parsed job description not found")
@@ -59,11 +59,13 @@ async def workflow_evaluate_cv(
             parsed_job_description=parsed_job_description,
             parsed_text=text,
         )
+        logging.info(f"Parsed skills: {text_extracted.model_dump()}")
         # Save and return the parsed text
         return await parsed_text_dao.save_parsed_text(
+            text=text,
             job_id=job_id,
             pdf_id=pdf_id,
-            parsed_text=text_extracted,
+            text_extracted=text_extracted,
         )
     except Exception as e:
         logging.error(

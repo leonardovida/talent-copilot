@@ -6,6 +6,7 @@ from cv_copilot.web.api import (
     job_descriptions,
     monitoring,
     parsed_job_descriptions,
+    parsed_texts,
     pdfs,
     redis,
     texts,
@@ -29,4 +30,9 @@ api_router.include_router(
     parsed_job_descriptions.router,
     prefix="/parsed-job-descriptions",
     tags=["parsed-job-descriptions"],
+)
+api_router.include_router(
+    parsed_texts.router,
+    prefix="/parsed-texts",
+    tags=["parsed-texts"],
 )

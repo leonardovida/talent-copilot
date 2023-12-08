@@ -21,6 +21,7 @@ class TextDAO:
         :param pdf_id: ID of the image to retrieve text for.
         :return: The text if found, else None.
         """
+        await self.session.commit()
         result = await self.session.execute(
             select(TextModel.text).where(TextModel.id == pdf_id),
         )
@@ -41,6 +42,7 @@ class TextDAO:
         self.session.add(new_text)
         await self.session.commit()
         await self.session.refresh(new_text)
+        logging.info(f"Text created with ID: {new_text.id}")
         return new_text
 
 
@@ -52,25 +54,26 @@ class ParsedTextDAO:
 
     async def get_parsed_text_by_id(
         self,
-        job_description_id: int,
+        pdf_id: int,
     ) -> Optional[ParsedTextModel]:
         """Get a single parsed text by its ID.
 
-        :param job_description_id: ID of the parsed text to retrieve.
+        :param pdf_id: ID of the PDF to use to retrieve the parsed text.
         :return: ParsedTextModel if found, else None.
         """
         result = await self.session.execute(
             select(ParsedTextModel).where(
-                ParsedTextModel.job_description_id == job_description_id,
+                ParsedTextModel.pdf_id == pdf_id,
             ),
         )
-        return result.scalar_one_or_none()
+        return result.scalar()
 
     async def save_parsed_text(
         self,
+        text: TextModel,
         job_id: int,
         pdf_id: int,
-        parsed_text: SkillsExtract,
+        text_extracted: SkillsExtract,
     ) -> ParsedTextModel:
         """Save a parsed text to the database.
 
@@ -78,10 +81,10 @@ class ParsedTextDAO:
         :param parsed_text: Parsed text to save.
         """
         new_parsed_text = ParsedTextModel(
-            job_id=job_id,
-            parsed_text=parsed_text.required_skills,
+            job_description_id=job_id,
+            text_id=text.id,
             pdf_id=pdf_id,
-            nice_to_have_skills=parsed_text.nice_to_have_skills,
+            parsed_skills=text_extracted.model_dump(),
         )
         self.session.add(new_parsed_text)
         await self.session.commit()

@@ -22,7 +22,7 @@ class TextModel(Base):
     )
 
     pdf = relationship("PDFModel", back_populates="text")
-    parsed_text = relationship("ParsedTextModel", dependent="all, delete-orphan")
+    parsed_text = relationship("ParsedTextModel")
 
 
 class ParsedTextModel(Base):
@@ -45,7 +45,7 @@ class ParsedTextModel(Base):
         Integer,
         nullable=False,
     )
-    parsed_skills: Mapped[JSONB] = mapped_column(Text, nullable=False)
+    parsed_skills: Mapped[JSONB] = mapped_column(JSONB, nullable=False)
     created_date = mapped_column(
         DateTime,
         nullable=False,

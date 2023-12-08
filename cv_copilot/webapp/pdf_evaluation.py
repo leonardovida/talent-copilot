@@ -5,6 +5,7 @@ import requests
 import streamlit as st
 
 API_ENDPOINT = "http://localhost:8000/api/pdfs"
+PARSED_TEXT_API_ENDPOINT = "http://localhost:8000/api/parsed-texts"
 
 
 def upload_pdf(job_id: str) -> None:
@@ -16,10 +17,13 @@ def upload_pdf(job_id: str) -> None:
         "Drag and drop your CV here",
         type=["pdf"],
         key=f"file_uploader_{job_id}",
+        # accept_multiple_files=True, TODO: Need to add this functionality
     )
     if st.button("Upload", key=f"upload_button_{job_id}"):
         if pdf_file is not None:
-            files = {"pdf_file": (pdf_file.name, pdf_file, "application/pdf")}
+            files = {
+                "pdf_file": (pdf_file.name, pdf_file.getvalue(), "application/pdf"),
+            }
             data = {
                 "name": pdf_file.name,
                 "job_id": job_id,
@@ -55,6 +59,36 @@ def get_cv_list(job_id: str, limit: str) -> List[Dict[str, str]]:
         return []
 
 
+def display_evaluation_by_category_and_type(
+    skills_extract: Dict[str, Dict[str, List[str]]],
+) -> None:
+    """Display the evaluation of the CV by category and type.
+
+    :param skills_extract: The skills extracted from the CV.
+    """
+    st.subheader("CV Evaluation")
+    skills = skills_extract["parsed_skills"]
+    for skill_category, skill_details in skills.items():
+        if isinstance(skill_details, dict):
+            st.markdown(f"### {skill_category}")
+            for skill_type, skill_type_details in skill_details.items():
+                if skill_type_details is not None:
+                    st.markdown(f"#### {skill_type}")
+                    # Create a list of dictionaries for each skill
+                    table_data = [
+                        {
+                            "Skill Name": skill["name"],
+                            "CV Match": skill["match"],
+                            "Content Match": skill["content_match"],
+                            "reasoning": skill["reasoning"],
+                        }
+                        for skill_name, skill in skill_type_details.items()
+                        if skill is not None
+                    ]
+                    # Display the table in Streamlit
+                    st.table(table_data)
+
+
 def process_cv(job_id: str, cv_id: str) -> None:
     """Process a CV.
 
@@ -69,7 +103,6 @@ def process_cv(job_id: str, cv_id: str) -> None:
     )
     if response.status_code == 200:
         st.success("CV evaluated!")
-        st.write(response.json())
     else:
         st.error(f"Failed to evaluate CV - {response.status_code}, {response.text}")
 
@@ -95,16 +128,31 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
     recent_cvs = get_cv_list(job_id, limit)
 
     for index, cv in enumerate(recent_cvs):
-        col1, col2, col3 = st.columns([8, 1, 1])
+        col1, col2, col3, col4 = st.columns([2, 4, 1, 1])
         col1.text(cv["name"])
 
         with col2:
+            with st.spinner("Fetching evaluation..."):
+                fetch_key = f"fetch_evaluation_{cv['id']}"
+                if st.button("Fetch evaluation", key=fetch_key):
+                    response = requests.get(
+                        f"{PARSED_TEXT_API_ENDPOINT}/{cv['id']}/",
+                        timeout=3,
+                    )
+                    if response.status_code == 200:
+                        display_evaluation_by_category_and_type(response.json())
+                    else:
+                        st.error(
+                            f"Failed to fetch evaluation for CV {cv['id']}: {response.status_code}",
+                        )
+
+        with col3:
             with st.spinner("Evaluating..."):
                 evaluate_key = f"evaluate_{cv['id']}"
                 if st.button("Evaluate CV", key=evaluate_key):
                     process_cv(job_id, cv["id"])
 
-        with col3:
+        with col4:
             delete_key = f"delete_cv_{cv['id']}"
             if st.button("Delete CV", key=delete_key):
                 delete_cv(cv["id"])

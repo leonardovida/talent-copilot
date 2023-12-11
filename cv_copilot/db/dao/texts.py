@@ -67,6 +67,25 @@ class ParsedTextDAO:
             ),
         )
         return result.scalar()
+    
+    async def get_parsed_text_by_pdf_id_and_job_id(
+        self,
+        pdf_id: int,
+        job_description_id: int,
+    ) -> Optional[ParsedTextModel]:
+        """Get a single parsed text by pdf and job id.
+
+        :param pdf_id: ID of the PDF to use to retrieve the parsed text.
+        :param job_description_id: ID of the job description to use to retrieve the parsed text.
+        :return: ParsedTextModel if found, else None.
+        """
+        result = await self.session.execute(
+            select(ParsedTextModel).where(
+                ParsedTextModel.pdf_id == pdf_id,
+                ParsedTextModel.job_description_id == job_description_id,
+            ),
+        )
+        return result.scalar()
 
     async def save_parsed_text(
         self,

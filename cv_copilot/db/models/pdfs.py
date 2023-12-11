@@ -40,4 +40,5 @@ class PDFModel(Base):
         back_populates="pdfs",
     )
     images = relationship("ImageModel", cascade="all, delete-orphan")
+    scores = relationship("ScoreModel", cascade="all, delete-orphan")
     text = relationship("TextModel")

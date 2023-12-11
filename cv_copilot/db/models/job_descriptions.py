@@ -33,6 +33,7 @@ class JobDescriptionModel(Base):
         cascade="all, delete-orphan",
     )
     parsed_text = relationship("ParsedTextModel", cascade="all, delete-orphan")
+    scores = relationship("ScoreModel", cascade="all, delete-orphan")
 
 
 class ParsedJobDescriptionModel(Base):
@@ -57,3 +58,4 @@ class ParsedJobDescriptionModel(Base):
         "JobDescriptionModel",
         back_populates="parsed_job_description",
     )
+    scores = relationship("ScoreModel", cascade="all, delete-orphan")

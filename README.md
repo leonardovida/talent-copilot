@@ -14,6 +14,12 @@ poetry install
 poetry run python -m cv_copilot
 ```
 
+If you have any issue running `poetry install`, please run this command:
+
+```bash
+pip install poetry && pip install --no-build-isolation pendulum==2.1.0
+```
+
 This will start the server on the configured host.
 
 You can find swagger documentation at `/api/docs`.
@@ -41,6 +47,12 @@ But you have to rebuild image every time you modify `poetry.lock` or `pyproject.
 
 ```bash
 docker-compose -f deploy/docker-compose.yml --project-directory . build
+```
+
+If you have any permission issue running `docker`, please run this command:
+
+```bash
+sudo chown -R $USER: /Users/your_computer_username/.docker
 ```
 
 ## Project structure
@@ -169,7 +181,7 @@ For running tests on your local machine.
 1. you need to start a database.
 
 I prefer doing it with docker:
-```
+```bash
 docker run -p "5432:5432" -e "POSTGRES_PASSWORD=cv_copilot" -e "POSTGRES_USER=cv_copilot" -e "POSTGRES_DB=cv_copilot" postgres:13.8-bullseye
 ```
 

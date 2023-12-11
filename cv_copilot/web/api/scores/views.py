@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter
 from fastapi import Depends, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,7 @@ get_score_dao = get_dao_dependency(ScoreDAO)
 get_parsed_text_dao = get_dao_dependency(ParsedTextDAO)
 get_job_description_dao = get_dao_dependency(ParsedJobDescriptionDAO)
 
-@router.post("process/{pdf_id}/{job_description_id}", response_model=ScoreModelDTO)
+@router.post("/process/{pdf_id}/{job_description_id}", response_model=ScoreModelDTO)
 async def get_scores(
     pdf_id: int, 
     job_description_id: int,
@@ -44,16 +45,14 @@ async def get_scores(
     :raises HTTPException: If the score is not found.
     """
 
-    parsed_text_result = await parsed_text_dao.get_parsed_text_by_pdf_id_and_job_id(pdf_id=pdf_id, job_description_id=job_description_id)
+    parsed_text_result = await parsed_text_dao.get_parsed_text_by_pdf_id_and_job_id(pdf_id=int(pdf_id), job_description_id=int(job_description_id))
     parsed_job_descriptions = await parsed_job_description_dao.get_parsed_job_description_by_id(job_description_id)
     result = await score_calculation(parsed_text=parsed_text_result)
 
-    response = await score_dao.save_score(pdf_id=pdf_id, 
-                        job_description_id=job_description_id,
+    response = await score_dao.save_score(pdf_id=int(pdf_id), 
+                        job_description_id=int(job_description_id),
                         parsed_job_description_id = parsed_job_descriptions.id,
-                        score=result['score'],
-
-                        )
+                        score=result['score'])
 
     if response is None:
         raise HTTPException(status_code=404, detail="Score not found")
@@ -68,7 +67,6 @@ async def get_last_score(
     score_dao: ScoreDAO = Depends(get_score_dao),
 ) -> ScoreModelDTO:
     
-    #TODO Update description
     """Get last Score.
 
     :param pdf_id: ID of the pdf.
@@ -78,7 +76,7 @@ async def get_last_score(
     :raises HTTPException: If the score is not found.
     """
 
-
+    
     response = await score_dao.get_scores_by_pdf_id_and_job_description_id(pdf_id=pdf_id, job_description_id=job_description_id)
     
     if response is None:

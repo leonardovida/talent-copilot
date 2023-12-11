@@ -107,7 +107,8 @@ def process_cv(job_id: str, cv_id: str) -> None:
     else:
         st.error(f"Failed to evaluate CV - {response.status_code}, {response.text}")
 
-def process_cv_score(job_id: str, cv_id: str) -> None:
+
+def process_cv_score(job_id: str, cv_id: str) -> float | str:
 
     """Process a CV Score.
 
@@ -122,8 +123,30 @@ def process_cv_score(job_id: str, cv_id: str) -> None:
     )
     if response.status_code == 200:
         st.success("Score generated!")
+        return round(response.json()['score'], 2)
     else:
         st.error(f"Failed to generate CV Score - {response.status_code}, {response.text}")
+        return "Undefined"
+    
+
+def get_last_cv_score(job_id: str, cv_id: str) -> float | str:
+
+    """Get last CV Score.
+
+    :param job_id: The ID of the job description to process the CV for.
+    :param cv_id: The ID of the CV to process.
+    """
+    params = {"job_id": job_id, "pdf_id": cv_id}
+    response = requests.get(
+        f"{API_SCORE_ENDPOINT}/{cv_id}/{job_id}",
+        timeout=600,
+        params=params,
+    )
+    if response.status_code == 200:
+        return round(response.json()['score'], 2)
+    else:
+        return "Undefined"
+
 
 def delete_cv(cv_id: str) -> None:
     """Delete a CV.
@@ -146,8 +169,13 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
     recent_cvs = get_cv_list(job_id, limit)
 
     for index, cv in enumerate(recent_cvs):
-        col1, col2, col3 = st.columns([2, 4, 2])
+        col1, col2, col3, col4 = st.columns([2, 4, 1, 1])
         col1.text(cv["name"])
+
+        try:
+            score = get_last_cv_score(job_id, cv["id"])
+        except:
+            score = None
 
         with col2:
             with st.spinner("Fetching evaluation..."):
@@ -172,8 +200,15 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
 
             score_key = f"score_calculate_{cv['id']}"
             if st.button("Generate CV Score", key=score_key):
-                process_cv_score(job_id, cv["id"])
+                score = process_cv_score(job_id, cv["id"])
             
             delete_key = f"delete_cv_{cv['id']}"
             if st.button("Delete CV", key=delete_key):
                 delete_cv(cv["id"])
+
+        with col4:
+            if score:
+                st.markdown(f"#### Score: {score}")
+
+
+        st.markdown("<hr>", unsafe_allow_html=True)

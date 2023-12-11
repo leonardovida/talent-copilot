@@ -6,6 +6,7 @@ import streamlit as st
 
 API_ENDPOINT = "http://localhost:8000/api/pdfs"
 PARSED_TEXT_API_ENDPOINT = "http://localhost:8000/api/parsed-texts"
+API_SCORE_ENDPOINT = "http://localhost:8000/api/scores"
 
 
 def upload_pdf(job_id: str) -> None:
@@ -106,6 +107,23 @@ def process_cv(job_id: str, cv_id: str) -> None:
     else:
         st.error(f"Failed to evaluate CV - {response.status_code}, {response.text}")
 
+def process_cv_score(job_id: str, cv_id: str) -> None:
+
+    """Process a CV Score.
+
+    :param job_id: The ID of the job description to process the CV for.
+    :param cv_id: The ID of the CV to process.
+    """
+    params = {"job_id": job_id, "pdf_id": cv_id}
+    response = requests.get(
+        f"{API_SCORE_ENDPOINT}/process/{cv_id}/{job_id}",
+        timeout=600,
+        params=params,
+    )
+    if response.status_code == 200:
+        st.success("Score generated!")
+    else:
+        st.error(f"Failed to generate CV Score - {response.status_code}, {response.text}")
 
 def delete_cv(cv_id: str) -> None:
     """Delete a CV.
@@ -128,7 +146,7 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
     recent_cvs = get_cv_list(job_id, limit)
 
     for index, cv in enumerate(recent_cvs):
-        col1, col2, col3, col4 = st.columns([2, 4, 1, 1])
+        col1, col2, col3 = st.columns([2, 4, 2])
         col1.text(cv["name"])
 
         with col2:
@@ -152,7 +170,10 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
                 if st.button("Evaluate CV", key=evaluate_key):
                     process_cv(job_id, cv["id"])
 
-        with col4:
+            score_key = f"score_calculate_{cv['id']}"
+            if st.button("Generate CV Score", key=score_key):
+                process_cv_score(job_id, cv["id"])
+            
             delete_key = f"delete_cv_{cv['id']}"
             if st.button("Delete CV", key=delete_key):
                 delete_cv(cv["id"])

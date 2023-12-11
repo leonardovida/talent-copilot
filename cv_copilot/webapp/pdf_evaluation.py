@@ -115,7 +115,7 @@ def process_cv_score(job_id: str, cv_id: str) -> None:
     :param cv_id: The ID of the CV to process.
     """
     params = {"job_id": job_id, "pdf_id": cv_id}
-    response = requests.get(
+    response = requests.post(
         f"{API_SCORE_ENDPOINT}/process/{cv_id}/{job_id}",
         timeout=600,
         params=params,

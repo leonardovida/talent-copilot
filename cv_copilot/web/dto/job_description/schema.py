@@ -83,8 +83,10 @@ class ParsedJobDescriptionDTO(BaseModel):
         :param obj: The JobDescriptionModel to create a DTO from.
         :return: The created ParsedJobDescriptionDTO.
         """
-        parsed_skills = json.loads(obj.parsed_skills) if obj.parsed_skills else {}
-        # parsed_skills = cast(Dict, obj.parsed_skills) if obj.parsed_skills else {}
+        if isinstance(obj.parsed_skills, str):
+            parsed_skills = json.loads(obj.parsed_skills)
+        else:
+            parsed_skills = obj.parsed_skills or {}
 
         return cls(
             id=obj.id,

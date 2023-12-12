@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Union
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from fastapi.param_functions import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,11 +54,13 @@ async def get_pdfs(
 
 @router.post("/", response_model=PDFModelDTO)
 async def upload_pdf(
+    background_tasks: BackgroundTasks,
     pdf_file: UploadFile = File(...),
     name: str = Form(...),
     job_id: int = Form(...),
     created_date: Union[str, datetime] = Form(...),
     pdf_dao: PDFDAO = Depends(get_pdf_dao),
+    process_after_upload: bool = Form(False),
 ) -> PDFModelDTO:
     """
     Store a new PDF in the database.
@@ -72,6 +74,9 @@ async def upload_pdf(
     """
     pdf_input = PDFModelInputDTO(name=name, job_id=job_id, created_date=created_date)
     pdf_model = await pdf_dao.upload_pdf(pdf_input, pdf_file)
+
+    if process_after_upload:
+        background_tasks.add_task(process_pdf, job_id=job_id, pdf_id=pdf_model.id)
 
     return pdf_model  # noqa: WPS331
 

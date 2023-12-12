@@ -1,0 +1,75 @@
+name: Testing cv_copilot
+
+on: push
+
+jobs:
+  black:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
+      with:
+        python-version: '3.11'
+    - name: Run black check
+      run: |
+        source .venv/bin/activate
+        poetry run black --check .
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
+      with:
+        python-version: '3.11'
+    - name: Run flake8 check
+      run: |
+        source .venv/bin/activate
+        poetry run flake8 --count .
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
+      with:
+        python-version: '3.11'
+    - name: Run mypy check
+      run: |
+        source .venv/bin/activate
+        poetry run mypy .
+  pytest:
+    runs-on: ubuntu-latest
+    services:
+
+      cv_copilot-db:
+        image: postgres:16-bullseye
+        env:
+          POSTGRES_PASSWORD: cv_copilot
+          POSTGRES_USER: cv_copilot
+          POSTGRES_DB: cv_copilot
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setup Python and Install Dependencies
+      uses: ./.github/actions/setup-python-poetry
+      with:
+        python-version: '3.11'
+    - name: Run pytest check
+      run: |
+        source .venv/bin/activate
+        poetry run pytest -vv --cov="cv_copilot" .
+      env:
+        CV_COPILOT_HOST: "0.0.0.0"
+        CV_COPILOT_DB_HOST: localhost

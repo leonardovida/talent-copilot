@@ -19,7 +19,12 @@ from cv_copilot.web.dto.texts.schema import ParsedTextDTO
 router = APIRouter()
 
 
-def get_dao_dependency(dao_class):
+def get_dao_dependency(dao_class: type):
+    """Create a dependency for a DAO class.
+
+    :param dao_class: The DAO class to create a dependency for.
+    """
+
     async def dependency(session: AsyncSession = Depends(get_db_session)) -> dao_class:
         return dao_class(session)
 

@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -73,7 +73,7 @@ class ParsedJobDescriptionDTO(BaseModel):
 
     id: int
     job_description_id: int
-    parsed_skills: dict
+    parsed_skills: Dict[str, Any]
     created_date: str
 
     @classmethod

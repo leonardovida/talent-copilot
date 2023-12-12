@@ -109,7 +109,6 @@ def process_cv(job_id: str, cv_id: str) -> None:
 
 
 def process_cv_score(job_id: str, cv_id: str) -> float | str:
-
     """Process a CV Score.
 
     :param job_id: The ID of the job description to process the CV for.
@@ -123,14 +122,15 @@ def process_cv_score(job_id: str, cv_id: str) -> float | str:
     )
     if response.status_code == 200:
         st.success("Score generated!")
-        return round(response.json()['score'], 2)
+        return round(response.json()["score"], 2)
     else:
-        st.error(f"Failed to generate CV Score - {response.status_code}, {response.text}")
+        st.error(
+            f"Failed to generate CV Score - {response.status_code}, {response.text}",
+        )
         return "Undefined"
-    
+
 
 def get_last_cv_score(job_id: str, cv_id: str) -> float | str:
-
     """Get last CV Score.
 
     :param job_id: The ID of the job description to process the CV for.
@@ -143,7 +143,7 @@ def get_last_cv_score(job_id: str, cv_id: str) -> float | str:
         params=params,
     )
     if response.status_code == 200:
-        return round(response.json()['score'], 2)
+        return round(response.json()["score"], 2)
     else:
         return "Undefined"
 
@@ -160,7 +160,7 @@ def delete_cv(cv_id: str) -> None:
         st.error(f"Failed to delete CV - {response.status_code}, {response.text}")
 
 
-def display_recent_cvs(job_id: str, limit: str = "10"):
+def display_recent_cvs(job_id: str, limit: str = "10") -> None:
     """Display the most recent CVs.
 
     :param job_id: The ID of the job description to display the CVs for.
@@ -201,7 +201,7 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
             score_key = f"score_calculate_{cv['id']}"
             if st.button("Generate CV Score", key=score_key):
                 score = process_cv_score(job_id, cv["id"])
-            
+
             delete_key = f"delete_cv_{cv['id']}"
             if st.button("Delete CV", key=delete_key):
                 delete_cv(cv["id"])
@@ -209,6 +209,5 @@ def display_recent_cvs(job_id: str, limit: str = "10"):
         with col4:
             if score:
                 st.markdown(f"#### Score: {score}")
-
 
         st.markdown("<hr>", unsafe_allow_html=True)

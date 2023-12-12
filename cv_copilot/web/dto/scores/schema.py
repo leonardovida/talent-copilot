@@ -1,6 +1,5 @@
-from datetime import datetime
-from typing import Optional, Union
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel
+
 from cv_copilot.db.models.scores import ScoreModel
 
 

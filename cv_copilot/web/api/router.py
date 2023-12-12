@@ -9,6 +9,7 @@ from cv_copilot.web.api import (
     parsed_texts,
     pdfs,
     redis,
+    scores,
     texts,
     users,
 )
@@ -36,3 +37,4 @@ api_router.include_router(
     prefix="/parsed-texts",
     tags=["parsed-texts"],
 )
+api_router.include_router(scores.router, prefix="/scores", tags=["scores"])

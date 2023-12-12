@@ -14,7 +14,7 @@ class TextDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_text_by_pdf_id(self, pdf_id: int) -> Optional[str]:
+    async def get_text_by_pdf_id(self, pdf_id: int) -> Optional[TextModel]:
         """
         Retrieve the text for a given image ID.
 
@@ -26,6 +26,8 @@ class TextDAO:
             select(TextModel.text).where(TextModel.id == pdf_id),
         )
         image_text = result.scalar_one_or_none()
+        if image_text is None:
+            logging.error(f"Text for PDF with ID {pdf_id} not found.")
         return image_text
 
     async def save_text(self, pdf_id: int, text: str) -> TextModel:
@@ -64,6 +66,25 @@ class ParsedTextDAO:
         result = await self.session.execute(
             select(ParsedTextModel).where(
                 ParsedTextModel.pdf_id == pdf_id,
+            ),
+        )
+        return result.scalar()
+
+    async def get_parsed_text_by_pdf_id_and_job_id(
+        self,
+        pdf_id: int,
+        job_description_id: int,
+    ) -> Optional[ParsedTextModel]:
+        """Get a single parsed text by pdf and job id.
+
+        :param pdf_id: ID of the PDF to use to retrieve the parsed text.
+        :param job_description_id: ID of the job description to use to retrieve the parsed text.
+        :return: ParsedTextModel if found, else None.
+        """
+        result = await self.session.execute(
+            select(ParsedTextModel).where(
+                ParsedTextModel.pdf_id == pdf_id,
+                ParsedTextModel.job_description_id == job_description_id,
             ),
         )
         return result.scalar()

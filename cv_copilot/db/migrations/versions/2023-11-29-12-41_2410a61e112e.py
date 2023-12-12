@@ -10,6 +10,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -125,6 +126,31 @@ def upgrade() -> None:
         Column("parsed_skills", JSONB, nullable=True),
         Column("created_date", DateTime, nullable=False),
     )
+    op.create_table(
+        "scores",
+        Column("id", Integer(), primary_key=True, autoincrement=True),
+        Column("pdf_id", Integer(), ForeignKey("pdfs.id"), nullable=False),
+        Column(
+            "job_description_id",
+            Integer(),
+            ForeignKey("job_descriptions.id"),
+            nullable=False,
+        ),
+        Column(
+            "parsed_job_description_id",
+            Integer(),
+            ForeignKey("parsed_job_descriptions.id"),
+            nullable=False,
+        ),
+        Column("score", Float(), nullable=False),
+        Column(
+            "created_date",
+            DateTime,
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
+        Column("updated_date", DateTime, nullable=True),
+    )
     print("Migration 2410a61e112e applied successfully.")
 
 
@@ -136,3 +162,4 @@ def downgrade() -> None:
     op.drop_table("job_descriptions")
     op.drop_table("users")
     op.drop_table("texts")
+    op.drop_table("scores")

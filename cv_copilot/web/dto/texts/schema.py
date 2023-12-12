@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 
 from pydantic import BaseModel
 
@@ -29,7 +30,7 @@ class ParsedTextDTO(BaseModel):
 
     id: int
     job_description_id: int
-    parsed_skills: dict
+    parsed_skills: Dict[str, Any]
 
     @classmethod
     def from_orm(cls, obj: ParsedTextModel) -> "ParsedTextDTO":
@@ -38,7 +39,10 @@ class ParsedTextDTO(BaseModel):
         :param obj: The ParsedTextModel to create a DTO from.
         :return: The created ParsedTextDTO.
         """
-        parsed_skills = json.loads(obj.parsed_skills) if obj.parsed_skills else {}
+        if isinstance(obj.parsed_skills, str):
+            parsed_skills = json.loads(obj.parsed_skills)
+        else:
+            parsed_skills = obj.parsed_skills or {}
 
         return cls(
             id=obj.id,

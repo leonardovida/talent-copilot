@@ -19,13 +19,13 @@ from cv_copilot.web.dto.texts.schema import ParsedTextDTO
 router = APIRouter()
 
 
-def get_dao_dependency(dao_class: type):
+def get_dao_dependency(dao_class: type):  # noqa: DAR201
     """Create a dependency for a DAO class.
 
     :param dao_class: The DAO class to create a dependency for.
     """
 
-    async def dependency(session: AsyncSession = Depends(get_db_session)) -> dao_class:
+    async def dependency(session: AsyncSession = Depends(get_db_session)):
         return dao_class(session)
 
     return dependency
@@ -75,6 +75,8 @@ async def upload_pdf(
     :param job_id: ID of the job description related to the PDF.
     :param created_date: Date the PDF was created. Can be a string or a datetime.
     :param pdf_dao: DAO for PDFs models.
+    :param background_tasks: BackgroundTasks dependency.
+    :param process_after_upload: Boolean to run the workflow process.
     :return: PDFModelDTO of the created PDF.
     """
     pdf_input = PDFModelInputDTO(name=name, job_id=job_id, created_date=created_date)
@@ -105,6 +107,10 @@ async def process_pdf(
     :param pdf_id: ID of the PDF to process.
     :param parsed_text_dao: DAO for ParsedText models.
     :param parsed_job_description_dao: DAO for ParsedJobDescription models.
+    :param pdf_dao: DAO for PDFs models.
+    :param image_dao: DAO for Image models.
+    :param text_dao: DAO for Text models.
+    :return: ParsedTextDTO of the created ParsedText.
     """
     # Trigger background tasks to process the PDF
     try:
@@ -165,8 +171,7 @@ async def delete_pdf(
         success = await pdf_dao.delete_pdf_by_id(pdf_id=pdf_id)
         if success:
             return {"detail": "PDF successfully deleted"}
-        else:
-            raise HTTPException(status_code=404, detail="PDF not found")
+        raise HTTPException(status_code=404, detail="PDF not found")
     except Exception as e:
         logging.error(f"Error deleting PDF ID {pdf_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

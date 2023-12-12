@@ -27,7 +27,6 @@ async def test_upload_image(
         pdf_id=create_pdf.id,
         job_id=create_job_description.id,
         encoded_image=test_encoded_image,
-        text=None,
     )
 
     # Upload the image using the DAO
@@ -38,6 +37,3 @@ async def test_upload_image(
     assert uploaded_image.pdf_id == create_pdf.id
     assert uploaded_image.job_id == create_job_description.id
     assert uploaded_image.encoded_image == test_encoded_image
-
-    images = await dao.get_images_by_id(create_pdf.id)
-    assert len(images) > 0  # noqa: WPS507

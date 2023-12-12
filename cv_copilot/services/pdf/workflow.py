@@ -90,7 +90,9 @@ async def convert_jpg_to_text(
         try:
             response = await get_text_from_image(image.encoded_image)
             logging.info({response.choices[0].message.content})
-            pdf_full_text += response.choices[0].message.content
+            content = response.choices[0].message.content
+            if content is not None:
+                pdf_full_text += content
         except Exception as e:
             logging.error(f"Error during processing image ID {image.id}: {e}")
 

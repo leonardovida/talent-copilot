@@ -26,7 +26,7 @@ class TextModel(Base):
 
 
 class ParsedTextModel(Base):
-    """Model for parsed texts."""
+    """Model for the match between the Job description and the CV."""
 
     __tablename__ = "parsed_texts"
 

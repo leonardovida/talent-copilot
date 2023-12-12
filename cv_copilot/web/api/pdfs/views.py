@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Union
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from fastapi.param_functions import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,7 @@ from cv_copilot.db.dependencies import get_db_session
 from cv_copilot.services.pdf.workflow import process_pdf_workflow
 from cv_copilot.services.text.workflow import workflow_evaluate_cv
 from cv_copilot.web.dto.pdfs.schema import PDFModelDTO, PDFModelInputDTO
-from cv_copilot.web.dto.texts.schema import ParsedTextDTO
+from cv_copilot.web.dto.texts.schema import ParsedTextDTO, TextDTO
 
 router = APIRouter()
 
@@ -54,10 +54,12 @@ async def get_pdfs(
 
 @router.post("/", response_model=PDFModelDTO)
 async def upload_pdf(
+    background_tasks: BackgroundTasks,
     pdf_file: UploadFile = File(...),
     name: str = Form(...),
     job_id: int = Form(...),
     created_date: Union[str, datetime] = Form(...),
+    process_after_upload: bool = Form(False),
     pdf_dao: PDFDAO = Depends(get_pdf_dao),
 ) -> PDFModelDTO:
     """
@@ -73,6 +75,9 @@ async def upload_pdf(
     pdf_input = PDFModelInputDTO(name=name, job_id=job_id, created_date=created_date)
     pdf_model = await pdf_dao.upload_pdf(pdf_input, pdf_file)
 
+    if process_after_upload:
+        background_tasks.add_task(process_pdf, job_id=job_id, pdf_id=pdf_model.id)
+
     return pdf_model  # noqa: WPS331
 
 
@@ -80,13 +85,7 @@ async def upload_pdf(
 async def process_pdf(
     job_id: int,
     pdf_id: int,
-    parsed_text_dao: ParsedTextDAO = Depends(get_parsed_text_dao),
-    parsed_job_description_dao: ParsedJobDescriptionDAO = Depends(
-        get_job_description_dao,
-    ),
-    pdf_dao: PDFDAO = Depends(get_pdf_dao),
-    image_dao: ImageDAO = Depends(get_image_dao),
-    text_dao: TextDAO = Depends(get_text_dao),
+    background_tasks: BackgroundTasks,
 ) -> ParsedTextDTO:
     """
     Trigger background tasks to process the PDF.
@@ -96,27 +95,84 @@ async def process_pdf(
     :param parsed_text_dao: DAO for ParsedText models.
     :param parsed_job_description_dao: DAO for ParsedJobDescription models.
     """
-    # Trigger background tasks to process the PDF
     try:
-        logging.info(f"Workflow: Process PDF ID {pdf_id}")
-        text = await process_pdf_workflow(
+        background_tasks.add_task(process_pdf_workflow, job_id=job_id, pdf_id=pdf_id)
+        background_tasks.add_task(evaluate_cv, job_id=job_id, pdf_id=pdf_id)
+    except Exception as e:
+        logging.error(f"Error processing PDF ID {pdf_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/{pdf_id}/process_workflow", response_model=TextDTO)
+async def process_pdf_workflow(
+    pdf_id: int,
+    pdf_dao: PDFDAO = Depends(get_pdf_dao),
+    image_dao: ImageDAO = Depends(get_image_dao),
+    text_dao: TextDAO = Depends(get_text_dao),
+) -> TextDTO:
+    """
+    Endpoint to process a PDF and extract text from it.
+
+    :param pdf_id: ID of the PDF to process.
+    :param pdf_dao: Data Access Object for PDF operations.
+    :param image_dao: Data Access Object for image operations.
+    :param text_dao: Data Access Object for text operations.
+    :return: TextDTO containing the extracted text.
+    :raises HTTPException: If the PDF cannot be processed.
+    """
+    try:
+        text_model = await process_pdf_workflow(
             pdf_id=pdf_id,
             pdf_dao=pdf_dao,
             image_dao=image_dao,
             text_dao=text_dao,
         )
-        logging.info(f"Workflow: Evaluate CV ID {pdf_id}")
-        parsed_text = await workflow_evaluate_cv(
-            text=text,
+        return TextDTO.from_orm(text_model)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/{pdf_id}/evaluate_cv", response_model=ParsedTextDTO)
+async def evaluate_cv(
+    pdf_id: int,
+    job_id: int,
+    text_dao: TextDAO = Depends(get_text_dao),
+    parsed_text_dao: ParsedTextDAO = Depends(get_parsed_text_dao),
+    parsed_job_description_dao: ParsedJobDescriptionDAO = Depends(
+        get_job_description_dao,
+    ),
+) -> ParsedTextDTO:
+    """
+    Endpoint to evaluate the extracted text from a PDF against a job description.
+
+    :param pdf_id: ID of the PDF whose text is to be evaluated.
+    :param job_id: ID of the job description against which the text is evaluated.
+    :param text_dao: Data Access Object for text operations.
+    :param parsed_text_dao: Data Access Object for parsed text operations.
+    :param parsed_job_description_dao: Data Access Object for parsed job description operations.
+    :return: ParsedTextDTO with the evaluation results.
+    :raises HTTPException: If the evaluation cannot be performed.
+    """
+    try:
+        # Retrieve the text associated with the PDF
+        text_model = await text_dao.get_text_by_pdf_id(pdf_id)
+        if text_model is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Text not found for the given PDF ID",
+            )
+
+        # Perform the evaluation
+        parsed_text_model = await workflow_evaluate_cv(
+            text=text_model,
             job_id=job_id,
             pdf_id=pdf_id,
             parsed_text_dao=parsed_text_dao,
             parsed_job_description_dao=parsed_job_description_dao,
         )
-        return ParsedTextDTO.from_orm(parsed_text)
+        return ParsedTextDTO.from_orm(parsed_text_model)
     except Exception as e:
-        logging.error(f"Error processing PDF ID {pdf_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{pdf_id}", response_model=PDFModelDTO)

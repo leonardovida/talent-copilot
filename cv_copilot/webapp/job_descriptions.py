@@ -94,6 +94,35 @@ def display_skills_by_category_and_type(
                     st.table(table_data)
 
 
+def display_weights_sliders(job_id: int) -> None:
+    """Display the sliders to adjust the weights for the skills."""
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.text("Required relative importance")
+    with col2:
+        st.slider(
+            "Required relative importance",
+            1,
+            5,
+            3,
+            1,
+            key=f"slider_required_{job_id}",
+        )
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        st.text("Nice-to-have relative importance")
+    with col2:
+        st.slider(
+            "Nice-to-have relative importance",
+            1,
+            5,
+            3,
+            1,
+            key=f"slider_nice_to_have_{job_id}",
+        )
+
+
 def create_new_job_description_form() -> None:
     """Display the form to create a new job description."""
     # Check if the session state indicates the form should be displayed
@@ -209,6 +238,11 @@ def list_job_descriptions_and_cvs(job_descriptions: List[Dict[str, str]]) -> Non
             st.markdown("<br>", unsafe_allow_html=True)
             upload_pdf(job["id"])
 
+            # ADD WEIGHTS SLIDERS
+            display_weights_sliders(job["id"])
+
+            # DISPLAY RECENT CVs
+            # TODO: change this to highest ranked CV based on scores
             st.markdown("<br>", unsafe_allow_html=True)
             display_recent_cvs(job["id"], limit="10")
 

@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cv_copilot.db.models.scores import ScoreModel
-from cv_copilot.web.dto.scores.schema import ScoreModelDTO
 
 
 class ScoreDAO:
@@ -37,8 +36,7 @@ class ScoreDAO:
             )
             .order_by(ScoreModel.id.desc()),
         )
-        score = result.scalar()
-        return ScoreModelDTO.from_orm(score)
+        return result.scalar()
 
     async def save_score(
         self,
@@ -47,7 +45,6 @@ class ScoreDAO:
         parsed_job_description_id: int,
         score: float,
     ) -> Optional[ScoreModel]:
-
         """
         Save a new score.
 
@@ -69,9 +66,9 @@ class ScoreDAO:
             self.session.add(new_score)
             await self.session.commit()
             await self.session.refresh(new_score)
-            logging.info(f"Score has created successfully!")
+            logging.info(f"Score saved with id {new_score.id}")
 
-            return ScoreModelDTO.from_orm(new_score)
+            return new_score
 
         except Exception as e:
             logging.error(f"Error uploading PDF: {e}")

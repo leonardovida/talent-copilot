@@ -1,6 +1,6 @@
 from fastapi.routing import APIRouter
 
-from cv_copilot.web.api import (
+from cv_copilot.web.api import (  # noqa: WPS235
     docs,
     echo,
     job_descriptions,

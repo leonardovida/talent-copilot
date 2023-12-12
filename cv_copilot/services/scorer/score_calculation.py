@@ -38,7 +38,8 @@ async def score_calculation(parsed_text: ParsedTextModel) -> dict:
     :return dict: A dictionary containing the calculated score.
     :raises ValueError: Exception raised when a score cannot be calculated.
     """
-    required_skills: List[dict] = parsed_text.parsed_skills.get("required_skills", [])
+
+    required_skills: List[dict] = parsed_text.parsed_skills["required_skills"]
     nice_to_have_skills: List[dict] = parsed_text.parsed_skills["nice_to_have_skills"]
 
     # Defining weights

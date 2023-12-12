@@ -55,6 +55,9 @@ async def create_job_description(
 
     :param job_description_input: DTO for creating a job description model.
     :param job_description_dao: DAO for Job Descriptions models.
+    :param parsed_job_description_dao: DAO for ParsedJobDescription models.
+    :param background_tasks: BackgroundTasks dependency.
+    :param run_process_workflow: Boolean to run the workflow process.
     :return: job_description_model: DTO of the created job description model.
     """
     job_description = await job_description_dao.create_job_description(

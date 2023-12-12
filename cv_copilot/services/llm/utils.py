@@ -1,14 +1,15 @@
 import logging
-from typing import Type
+from typing import Union
 
-import httpx
 import instructor
 from openai import OpenAI
+from openai.types.chat import ChatCompletion
 
+from cv_copilot.services.llm.models.skills import EvaluationExtract, SkillsExtract
 from cv_copilot.settings import settings
 
 
-async def get_text_from_image(image: str) -> httpx.Response:
+async def get_text_from_image(image: str) -> ChatCompletion:
     """Get text from an image using OpenAI's API.
 
     :param image: The image file encoded in base64.
@@ -41,8 +42,8 @@ async def get_text_from_image(image: str) -> httpx.Response:
 async def oa_async_request(
     system_prompt: str,
     user_prompt: str,
-    response_model: Type,
-) -> Type:
+    response_model: Union[SkillsExtract, EvaluationExtract],
+) -> Union[SkillsExtract, EvaluationExtract]:
     """Send a request to OpenAI asynchronously.
 
     :param system_prompt: The system prompt to send to OpenAI.

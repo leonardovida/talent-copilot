@@ -11,8 +11,10 @@ from cv_copilot.web.dto.scores.schema import ScoreModelDTO
 router = APIRouter()
 
 
-def get_dao_dependency(dao_class):
-    async def dependency(session: AsyncSession = Depends(get_db_session)) -> dao_class:
+def get_dao_dependency(dao_class):  # noqa: D103
+    async def dependency(
+        session: AsyncSession = Depends(get_db_session),
+    ) -> dao_class:  # noqa: WPS430
         return dao_class(session)
 
     return dependency
@@ -33,7 +35,6 @@ async def get_scores(
         get_job_description_dao,
     ),
 ) -> ScoreModelDTO:
-
     """Process a new Score.
 
     :param pdf_id: ID of the pdf.
@@ -54,19 +55,21 @@ async def get_scores(
             job_description_id,
         )
     )
+    if parsed_text_result is None or parsed_job_descriptions is None:
+        raise HTTPException(status_code=404, detail="Parsed text not found")
     result = await score_calculation(parsed_text=parsed_text_result)
 
-    response = await score_dao.save_score(
+    score = await score_dao.save_score(
         pdf_id=int(pdf_id),
         job_description_id=int(job_description_id),
         parsed_job_description_id=parsed_job_descriptions.id,
         score=result["score"],
     )
 
-    if response is None:
+    if score is None:
         raise HTTPException(status_code=404, detail="Score not found")
 
-    return response
+    return ScoreModelDTO.from_orm(score)
 
 
 @router.get("/{pdf_id}/{job_description_id}", response_model=ScoreModelDTO)
@@ -75,7 +78,6 @@ async def get_last_score(
     job_description_id: int,
     score_dao: ScoreDAO = Depends(get_score_dao),
 ) -> ScoreModelDTO:
-
     """Get last Score.
 
     :param pdf_id: ID of the pdf.
@@ -85,12 +87,12 @@ async def get_last_score(
     :raises HTTPException: If the score is not found.
     """
 
-    response = await score_dao.get_scores_by_pdf_id_and_job_description_id(
+    score = await score_dao.get_scores_by_pdf_id_and_job_description_id(
         pdf_id=pdf_id,
         job_description_id=job_description_id,
     )
 
-    if response is None:
+    if score is None:
         raise HTTPException(status_code=404, detail="Score not found")
 
-    return response
+    return ScoreModelDTO.from_orm(score)

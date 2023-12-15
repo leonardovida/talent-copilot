@@ -125,7 +125,7 @@ def process_cv_score(job_id: str, cv_id: str) -> float | str:
         return round(response.json()["score"], 2)
     else:
         st.error(
-            f"Failed to generate CV Score - {response.status_code}, {response.text}",
+            f"Failed to generate CV Score - {response.status_code}, {response.text}"
         )
         return "Undefined"
 
@@ -160,7 +160,7 @@ def delete_cv(cv_id: str) -> None:
         st.error(f"Failed to delete CV - {response.status_code}, {response.text}")
 
 
-def display_recent_cvs(job_id: str, limit: str = "10") -> None:
+def display_recent_cvs(job_id: str, limit: str = "10"):
     """Display the most recent CVs.
 
     :param job_id: The ID of the job description to display the CVs for.

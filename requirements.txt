@@ -37,7 +37,6 @@ coloredlogs==15.0.1
 comm==0.2.0
 coverage==7.3.2
 cryptography==41.0.5
--e git+ssh://git@github.com/leonardovida/cv-copilot.git@efddb6e39a16b41abcb417f4cea6d9c3da555998#egg=cv_copilot
 darglint==1.8.1
 dataclasses-json==0.6.2
 debugpy==1.8.0
